@@ -1,2 +1,2 @@
 # wpcmd
-A command tool for WordPress.
+A command-line tool for WordPress.
