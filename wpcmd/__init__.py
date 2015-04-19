@@ -112,6 +112,7 @@ def main():
     workDir = os.path.abspath(
         os.path.join(os.path.split(
         os.path.abspath(__file__))[0], os.pardir))
+    homedir = os.path.expanduser('~')
     conffile = os.path.join(workDir, "build.conf.py")
     if os.path.exists(conffile):
         gconf.read_from_file(conffile)

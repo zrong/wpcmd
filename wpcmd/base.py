@@ -20,10 +20,11 @@ from wordpress_xmlrpc.methods.taxonomies import (GetTerms)
 
 class Action(object):
 
-    def __init__(self, gconf, gargs, gparser):
+    def __init__(self, gconf, gargs, gparser, gtermcache):
         self.conf = gconf
         self.args = gargs
         self.parser = gparser
+        self.termcache = gtermcache
         self._wp = None
         self._update_site_config()
 
@@ -95,7 +96,7 @@ class Action(object):
         if not terms or force:
             results = self.wpcall(GetTerms(taxname))
             if results:
-                self.conf.save_terms(results, taxname)
+                self.termcache.save_terms(results, taxname)
         if terms and slug:
             return terms[slug]
         return terms
@@ -266,9 +267,15 @@ class Conf(DictBase):
                 name = afile.split('.')[0]
                 yield (posttype, name, os.path.join(posttype, afile))
 
-class TermCacache(DictBase):
-	""" A cache for terms.
-	"""
+class TermCache(DictBase):
+    """ A cache for terms.
+    """
+
+    def __init__(self, filepath):
+        self.cachefile = filepath
+
+    def save_to_file(self):
+        super().save_to_file(self.cachefile)
 
     def save_terms(self, terms, taxname):
         termdict = DictBase()
