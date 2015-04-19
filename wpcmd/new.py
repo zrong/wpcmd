@@ -1,7 +1,15 @@
+########################################
+# new.py
+# 
+# Author zrong(zengrong.net)
+# Creation 2014-12-01
+# Modification 2015-04-19
+########################################
 import shutil
 import datetime
-from zrong.base import slog, write_by_templ
-from wpcmd.base import Action,BlogError
+from zrong import slog
+from zrong.base import write_by_templ
+from wpcmd.base import Action
 from wordpress_xmlrpc import (WordPressTerm)
 from wordpress_xmlrpc.methods.taxonomies import (NewTerm,GetTerm)
 

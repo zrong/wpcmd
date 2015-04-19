@@ -1,3 +1,10 @@
+#########################################
+# update.py
+#
+# Author zrong(zengrong.net)
+# Creation 2014-12-01
+#########################################
+
 import os
 import re
 import mimetypes

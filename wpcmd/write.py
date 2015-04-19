@@ -1,8 +1,16 @@
+#########################################
+# write.py
+#
+# Author zrong(zengrong.net)
+# Creation 2014-11-18
+#########################################
+
 import os
 import re
 import markdown
 import shutil
-from zrong.base import read_file, slog, list_dir
+from zrong import slog
+from zrong.base import read_file, list_dir
 from wpcmd.base import Action
 
 class WriteAction(Action):

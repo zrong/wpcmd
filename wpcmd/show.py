@@ -1,3 +1,10 @@
+#########################################
+# show.py
+#
+# Author zrong(zengrong.net)
+# Creation 2014-12-01
+#########################################
+
 from zrong.base import slog
 from wpcmd.base import Action
 from wordpress_xmlrpc import (WordPressPost, WordPressPage)
