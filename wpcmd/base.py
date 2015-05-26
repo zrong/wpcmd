@@ -184,10 +184,11 @@ class Conf(DictBase):
     ARTICLE_TYPES = ('post', 'page', 'draft')
 
     def save_to_file(self):
+        print('conffile:', self.conffile)
         super().save_to_file(self.conffile)
 
     def init(self, workDir, confFile):
-        self.confile = confFile
+        self.conffile = confFile
         self.site = DictBase(
         {
             'user': 'user',
