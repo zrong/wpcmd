@@ -3,6 +3,7 @@
 #
 # Author zrong(zengrong.net)
 # Creation 2014-11-18
+# Modification 2015-05-28
 #########################################
 
 __all__ = ['write', 'wordpress']
@@ -13,7 +14,7 @@ import logging
 import importlib
 import argparse
 from zrong import slog, add_log_handler
-import wpcmd.base
+from wpcmd.base import (Conf, TermCache)
 
 add_log_handler(slog,
     handler=logging.StreamHandler(sys.stdout),
@@ -44,12 +45,6 @@ def check_args(argv=None):
 
     pn = subParsers.add_parser('new', 
         help='Create some new content.')
-    pn.add_argument('-u', '--user', type=str, 
-        help='Login username.')
-    pn.add_argument('-p', '--password', type=str, 
-        help='Login password.')
-    pn.add_argument('-s', '--site', type=str, 
-        help='Site url.')
     pn.add_argument('-t', '--type', type=str,
         choices=['post', 'page', 'tag', 'category'],
         default='post',
@@ -59,12 +54,6 @@ def check_args(argv=None):
 
     ps = subParsers.add_parser('show', 
         help='Show wordpress contents.')
-    ps.add_argument('-u', '--user', type=str, 
-        help='Login username.')
-    ps.add_argument('-p', '--password', type=str, 
-        help='Login password.')
-    ps.add_argument('-s', '--site', type=str, 
-        help='Site url.')
     ps.add_argument('-t', '--type', type=str,
         choices=['post', 'page', 'draft',
             'option','tax','term',
@@ -88,18 +77,17 @@ def check_args(argv=None):
 
     pu = subParsers.add_parser('update', 
         help='Update wordpress contents.')
-    pu.add_argument('-u', '--user', type=str, 
-        help='Login username.')
-    pu.add_argument('-p', '--password', type=str, 
-        help='Login password.')
-    pu.add_argument('-s', '--site', type=str, 
-        help='Site url.')
     pu.add_argument('-t', '--type', type=str,
         choices=['post', 'page', 'draft', 'option', 'tag', 'category'],
         default='post',
         help='Content type of wordpress.')
     pu.add_argument('-q', '--query', nargs='*',
         help='The options for query.')
+
+    # Add site argument to new/update/show.
+    for subp in (pn, ps, pu):
+        subp.add_argument('-s', '--site', type=str, default='site',
+            help='Set the site section in ini config files. Default value is "site".')
 
     args = parser.parse_args(args=argv)
     if args.sub_name:
@@ -108,21 +96,19 @@ def check_args(argv=None):
     return None, None
 
 def main():
-    gconf = wpcmd.base.Conf()
-    workDir = os.path.abspath(
+    workdir = os.path.abspath(
         os.path.join(os.path.split(
         os.path.abspath(__file__))[0], os.pardir))
     homedir = os.path.expanduser('~')
-    conffile = os.path.join(workDir, "build.conf.py")
-    if os.path.exists(conffile):
-        gconf.read_from_file(conffile)
-    else:
-        gconf.init(workDir, conffile)
-        slog.info('Please modify build.conf.py!')
+    conffile = os.path.join(homedir, Conf.INI_FILE)
+    cachefile = os.path.join(homedir, Conf.CACHE_FILE)
+
+    gcache = TermCache(cachefile)
+    gconf = Conf(conffile, cachefile, gcache)
+    if not gconf.init(workdir):
         exit(1)
 
     gargs, subParser = check_args()
     if gargs:
-        _build(gargs.sub_name, gconf, gargs, subParser)
         pack = importlib.import_module(gargs.sub_name)
-        pack.build(gconf, gargs, subParsers)
+        pack.build(gconf, gcache, gargs, subParser)

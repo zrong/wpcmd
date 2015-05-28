@@ -1,4 +1,5 @@
 python-wordpress-xmlrpc>=2.3
 Pygments>=2.0.2
 Markdown>=2.5.2
+pygments
 https://github.com/zrong/python/releases/download/v0.2.9/zrong-0.2.9.tar.gz

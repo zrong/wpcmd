@@ -12,6 +12,7 @@ from zrong.base import write_by_templ
 from wpcmd.base import Action
 from wordpress_xmlrpc import (WordPressTerm)
 from wordpress_xmlrpc.methods.taxonomies import (NewTerm,GetTerm)
+from wpcmd import BlogError
 
 class NewAction(Action):
 
@@ -29,7 +30,7 @@ class NewAction(Action):
                 'TITLE':'',
                 'DATE':dt,
                 'MODIFIED':dt,
-                'AUTHOR':self.conf.site.user,
+                'AUTHOR':self.conf.get_user(),
                 'NICENAME':'',
                 'CATEGORY':'technology',
                 'TAG':'',
@@ -69,8 +70,8 @@ class NewAction(Action):
         if not term:
             return
         slog.info('The term %s(%s) has created.'%(name, termid))
-        self.conf.save_term(term, taxname)
-        self.conf.save_to_file()
+        self.cache.save_term(term, taxname)
+        self.cache.save_to_file()
         slog.info('The term %s has saved.'%name)
 
     def go(self):
@@ -81,7 +82,7 @@ class NewAction(Action):
             self._new_term()
 
 
-def build(gconf, gargs, parser=None):
-    action = NewAction(gconf, gargs, parser)
+def build(gconf, gcache, gargs, parser=None):
+    action = NewAction(gconf, gcache, gargs, parser)
     action.build()
 

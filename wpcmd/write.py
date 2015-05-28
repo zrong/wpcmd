@@ -47,12 +47,12 @@ class WriteAction(Action):
 
 
     def _write_readme(self):
-        with open('README.md', 'w', encoding='utf-8', newline='\n') as f:
+        with open(self.conf.get_path('README.md'), 'w', encoding='utf-8', newline='\n') as f:
             f.write("[zrong's blog](http://zengrong.net) 中的所有文章\n")
             f.write('==========\n\n')
             f.write("----------\n\n")
-            self._write_list('page', f)
-            self._write_list('post', f)
+            self._write_list(self.conf.get_path('page'), f)
+            self._write_list(self.conf.get_path('post'), f)
 
     def _rewrite_url(self, dirname):
         """

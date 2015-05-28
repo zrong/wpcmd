@@ -3,6 +3,7 @@
 #
 # Author zrong(zengrong.net)
 # Creation 2014-12-04
+# Modification 2015-05-28
 #########################################
 
 import os
@@ -10,40 +11,141 @@ import re
 import platform
 import shutil
 from xmlrpc.client import Fault
+from string import Template
 from datetime import (datetime, timedelta)
-from zrong import slog
-from zrong.base import DictBase, list_dir
+import configparser
 from wordpress_xmlrpc import (Client, 
         WordPressPost, WordPressPage, WordPressTerm, WordPressMedia)
 from wordpress_xmlrpc.exceptions import InvalidCredentialsError 
 from wordpress_xmlrpc.methods.taxonomies import (GetTerms)
+from pkg_resources import (resource_filename, resource_string)
+from zrong import slog
+from zrong.base import (DictBase, list_dir, read_file, write_file)
+
+
+class Conf(object):
+
+    TPL_FILE = 'wpcmd.ini.tpl'
+    PRE_NAME = '_' if platform.system() == 'Windows' else '.'
+    INI_FILE = PRE_NAME+'wpcmd.ini'
+    CACHE_FILE = PRE_NAME+'wpcmd.cache.py'
+
+    ARTICLE_TYPES = ('post', 'page', 'draft')
+
+    def __init__(self, conffile, cachefile, gcache):
+        self.conffile = conffile
+        self.cachefile = cachefile
+        self.ini = configparser.ConfigParser()
+        self.cache = gcache
+
+    def __missing__(self, key):
+        return None
+
+    def __getattr__(self, name):
+        return self.ini[name]
+
+    def get(self, section, option):
+        return self.ini.get(section, option, raw=True, fallback=None)
+
+    def get_user(self):
+        return self.ini.get(self.site, 'user')
+
+    def get_password(self):
+        return self.ini.get(self.site, 'password')
+
+    def get_url(self):
+        return self.ini.get(self.site, 'url')
+
+    def set_site(self, site):
+        self.site = site
+
+    def save_to_file(self, inistr):
+        write_file(self.conffile, inistr)
+
+    def read_from_file(self):
+        self.ini.read(self.conffile)
+
+    def init(self, workdir):
+        if os.path.exists(self.conffile):
+            self.read_from_file()
+            return True
+
+        tplstr = read_file(resource_filename('wpcmd', Conf.TPL_FILE))
+        inistr = Template(tplstr).substitute(
+            {'CONFFILE':self.conffile, 
+            'CACHEFILE':self.cachefile,
+            'WORK':workdir,
+            })
+        self.save_to_file(inistr)
+        self.read_from_file()
+        slog.info('Please modify %s !'%self.conffile)
+        return False
+
+    def is_article(self, posttype):
+        return posttype in Conf.ARTICLE_TYPES
+
+    def get_draft(self, name):
+        """
+        There are two kind of draft file in draft directory.
+        One has published to wordpress and in draft status;
+        One has not been published to wordpress yet.
+        """
+        draftname = (self.get('file', 'draftfmt') % str(name))+self.get('file', 'ext')
+        return self.get_path(self.get('directory', 'draft'), draftname), draftname
+
+    def get_new_draft(self, name=None):
+        draftdir = self.get_path(self.get('directory', 'draft'))
+        if not os.path.exists(draftdir):
+            os.makedirs(draftdir)
+        draftnames = list(list_dir(draftdir))
+        draftfile, draftname = None, None
+        if name:
+            draftfile, draftname = self.get_draft(name)
+            if draftname in draftnames:
+                raise BlogError('The draft file "%s" is already existence!'%
+                        draftname)
+        else:
+            name = 1
+            draftfile, draftname = self.get_draft(name)
+            while os.path.exists(draftfile):
+                name += 1
+                draftfile, draftname = self.get_draft(name)
+        return draftfile, draftname
+
+    def get_article(self, name, posttype):
+        postname = name+self.get('file', 'ext')
+        if self.is_article(posttype):
+            return self.get_path(self.get('directory', posttype), postname), postname
+        return None, None
+
+    def get_path(self, name, *path):
+        workdir = os.path.join(self.get('directory', 'work'), name)
+        if path:
+            return os.path.abspath(os.path.join(workdir, *path))
+        return workdir
+
+    def get_media(self, *path):
+        mediadir = self.get_path(self.directory.media)
+        if path:
+            return os.path.join(mediadir, *path)
+        return mediadir
+
+    def get_mdfiles(self, posttype):
+        for afile in os.listdir(self.get_path(posttype)):
+            if afile.endswith(self.get('file', 'ext')):
+                name = afile.split('.')[0]
+                yield (posttype, name, os.path.join(posttype, afile))
+
 
 class Action(object):
 
-    def __init__(self, gconf, gargs, gparser, gtermcache):
+    def __init__(self, gconf, gtermcache, gargs, gparser):
         self.conf = gconf
+        self.conf.set_site(gargs.site)
+        self.cache = gtermcache
         self.args = gargs
         self.parser = gparser
-        self.termcache = gtermcache
         self._wp = None
-        self._update_site_config()
-
-    def _update_site_config(self):
-        if self.args.user:
-            self.conf.site.user = self.args.user
-        if self.args.password:
-            self.conf.site.password = self.args.password
-        if self.args.site:
-            if self.args.site.rfind('xmlrpc.php')>0:
-                self.conf.site.url = self.args.site
-            else:
-                removeslash = self.args.site.rfind('/')
-                if removeslash == len(self.args.site)-1:
-                    removeslash = self.args.site[0:removeslash]
-                else:
-                    removeslash = self.args.site
-                self.conf.site.url = '%s/xmlrpc.php'%removeslash
-
 
     def get_postid(self, as_list=False):
         if not self.args.query:
@@ -92,11 +194,11 @@ class Action(object):
             return None
         taxname = query[0]
         slug = query[1] if len(query)>1 else None
-        terms = self.conf[taxname]
+        terms = self.cache[taxname]
         if not terms or force:
             results = self.wpcall(GetTerms(taxname))
             if results:
-                self.termcache.save_terms(results, taxname)
+                self.cache.save_terms(results, taxname)
         if terms and slug:
             return terms[slug]
         return terms
@@ -140,31 +242,11 @@ class Action(object):
         dt = datetime.strptime(datestring, '%Y-%m-%d %H:%M:%S')
         return dt - timedelta(hours=8)
 
-    def get_terms_from_meta(self, categories, tags):
-        terms = []
-        if categories:
-            for cat in categories:
-                term = self.conf.get_term('category', cat)
-                if not term:
-                    slog.error('The category "%s" is not in wordpress.'
-                            ' Please create it first.'%cat)
-                    return None
-                terms.append(term)
-        if tags:
-            for tag in tags:
-                term = self.conf.get_term('post_tag', tag)
-                if not term:
-                    slog.error('The tag "%s" is not in wordpress.'
-                            'Please create it first'%tag)
-                    return None
-                terms.append(term)
-        return terms
-
     def wpcall(self, method):
         if not self._wp:
-            self._wp = Client(self.conf.site.url, 
-                    self.conf.site.user, 
-                    self.conf.site.password)
+            self._wp = Client(self.conf.get_url(),
+                    self.conf.get_user(),
+                    self.conf.get_password())
         try:
             results = self._wp.call(method)
         except InvalidCredentialsError as e:
@@ -184,88 +266,6 @@ class Action(object):
         elif self.parser:
             self.parser.print_help()
 
-class Conf(DictBase):
-
-    ARTICLE_TYPES = ('post', 'page', 'draft')
-
-    def save_to_file(self):
-        super().save_to_file(self.conffile)
-
-    def init(self, workDir, confFile):
-        self.confile = confFile
-        self.site = DictBase(
-        {
-            'user': 'user',
-            'password': 'password',
-            'url': 'http://you-wordpress-blog/xmlrpc.php',
-        })
-        self.directory = DictBase(
-        {
-            'work': workDir,
-            'draft': 'draft',
-            'post': 'post',
-            'page': 'page',
-            'media': 'media',
-        })
-        self.files = DictBase(
-        {
-            'ext': '.md',
-            'draftfmt': 'draft_%s',
-        })
-        self.save_to_file()
-
-
-    def is_article(self, posttype):
-        return posttype in Conf.ARTICLE_TYPES
-
-    def get_draft(self, name):
-        """
-        There are two kind of draft file in draft directory.
-        One has published to wordpress and in draft status;
-        One has beed not published to wordpress yet.
-        """
-        draftname = (self.files.draftfmt % str(name))+self.files.ext
-        return self.get_path(self.directory.draft, draftname), draftname
-
-    def get_new_draft(self, name=None):
-        draftnames = list(list_dir(self.get_path(self.directory.draft)))
-        draftfile, draftname = None, None
-        if name:
-            draftfile, draftname = self.get_draft(name)
-            if draftname in draftnames:
-                raise BlogError('The draft file "%s" is already existence!'%
-                        draftname)
-        else:
-            name = 1
-            draftfile, draftname = self.get_draft(name)
-            while os.path.exists(draftfile):
-                name += 1
-                draftfile, draftname = self.get_draft(name)
-        return draftfile, draftname
-
-    def get_article(self, name, posttype):
-        postname = name+self.files.ext
-        if self.is_article(posttype):
-            return self.get_path(self.directory[posttype], postname), postname
-        return None, None
-
-    def get_path(self, name, *path):
-        workdir = os.path.join(self.directory.work, name)
-        if path:
-            return os.path.abspath(os.path.join(workdir, *path))
-        return workdir
-
-    def get_media(self, *path):
-        mediadir = self.get_path(self.directory.media)
-        if path:
-            return os.path.join(mediadir, *path)
-        return mediadir
-
-    def get_mdfiles(self, posttype):
-        for afile in os.listdir(self.get_path(posttype)):
-            if afile.endswith('.md'):
-                name = afile.split('.')[0]
-                yield (posttype, name, os.path.join(posttype, afile))
 
 class TermCache(DictBase):
     """ A cache for terms.
@@ -316,4 +316,24 @@ class TermCache(DictBase):
         term.parent = termdict['parent']
         term.count = termdict['count']
         return term
+
+    def get_terms_from_meta(self, categories, tags):
+        terms = []
+        if categories:
+            for cat in categories:
+                term = self.get_term('category', cat)
+                if not term:
+                    slog.error('The category "%s" is not in wordpress.'
+                            ' Please create it first.'%cat)
+                    return None
+                terms.append(term)
+        if tags:
+            for tag in tags:
+                term = self.get_term('post_tag', tag)
+                if not term:
+                    slog.error('The tag "%s" is not in wordpress.'
+                            'Please create it first'%tag)
+                    return None
+                terms.append(term)
+        return terms
 

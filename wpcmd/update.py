@@ -3,6 +3,7 @@
 #
 # Author zrong(zengrong.net)
 # Creation 2014-12-01
+# Modification 2015-05-28
 #########################################
 
 import os
@@ -128,7 +129,7 @@ class UpdateAction(Action):
 
     def _get_medias(self, txt):
         return [(item, item.split('/')[-1]) for item in \
-                re.findall(u'%s/draft/[\w\.\-]*'%self.conf.directory.media, txt, re.M)]
+                re.findall(u'%s/draft/[\w\.\-]*'%self.conf.get('directory', 'media'), txt, re.M)]
 
     def _update_a_draft(self):
         postid = self.get_postid()
@@ -218,7 +219,7 @@ class UpdateAction(Action):
         if meta.modified:
             post.date_modified = meta.modified
 
-        terms = self.get_terms_from_meta(meta.category, meta.tags)
+        terms = self.cache.get_terms_from_meta(meta.category, meta.tags)
         if terms:
             post.terms = terms
         elif self.args.type == 'post':
@@ -303,6 +304,6 @@ class UpdateAction(Action):
             self._update_term()
 
 
-def build(gconf, gargs, parser=None):
-    action = UpdateAction(gconf, gargs, parser)
+def build(gconf, gcache, gargs, parser=None):
+    action = UpdateAction(gconf, gcache, gargs, parser)
     action.build()

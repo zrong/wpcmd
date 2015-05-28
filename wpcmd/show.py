@@ -117,6 +117,6 @@ class ShowAction(Action):
             self._show_mediaitem()
 
 
-def build(gconf, gargs, parser=None):
-    action = ShowAction(gconf, gargs, parser)
+def build(gconf, gcache, gargs, parser=None):
+    action = ShowAction(gconf, gcache, gargs, parser)
     action.build()
