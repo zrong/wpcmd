@@ -38,6 +38,22 @@ class Conf(object):
         self.ini = configparser.ConfigParser()
         self.cache = gcache
 
+    def init(self, workdir):
+        if os.path.exists(self.conffile):
+            self.read_from_file()
+            return True
+
+        tplstr = read_file(resource_filename('wpcmd', Conf.TPL_FILE))
+        inistr = Template(tplstr).substitute(
+            {'CONFFILE':self.conffile, 
+            'CACHEFILE':self.cachefile,
+            'WORK':workdir,
+            })
+        self.save_to_file(inistr)
+        self.read_from_file()
+        slog.info('Please modify %s !'%self.conffile)
+        return False
+
     def __missing__(self, key):
         return None
 
@@ -64,22 +80,6 @@ class Conf(object):
 
     def read_from_file(self):
         self.ini.read(self.conffile)
-
-    def init(self, workdir):
-        if os.path.exists(self.conffile):
-            self.read_from_file()
-            return True
-
-        tplstr = read_file(resource_filename('wpcmd', Conf.TPL_FILE))
-        inistr = Template(tplstr).substitute(
-            {'CONFFILE':self.conffile, 
-            'CACHEFILE':self.cachefile,
-            'WORK':workdir,
-            })
-        self.save_to_file(inistr)
-        self.read_from_file()
-        slog.info('Please modify %s !'%self.conffile)
-        return False
 
     def is_article(self, posttype):
         return posttype in Conf.ARTICLE_TYPES
@@ -273,6 +273,10 @@ class TermCache(DictBase):
 
     def __init__(self, filepath):
         self.cachefile = filepath
+
+    def init(self):
+        if os.path.exists(self.cachefile):
+            super().read_from_file(self.cachefile)
 
     def save_to_file(self):
         super().save_to_file(self.cachefile)

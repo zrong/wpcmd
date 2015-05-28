@@ -104,6 +104,7 @@ def main():
     cachefile = os.path.join(homedir, Conf.CACHE_FILE)
 
     gcache = TermCache(cachefile)
+    gcache.init()
     gconf = Conf(conffile, cachefile, gcache)
     if not gconf.init(workdir):
         exit(1)

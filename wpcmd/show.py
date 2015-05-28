@@ -23,7 +23,7 @@ class ShowAction(Action):
 
         method = None
         if self.args.query:
-            method = GetPost(_get_postid(), result_class=WordPressPage)
+            method = GetPost(self.get_postid(), result_class=WordPressPage)
         else:
             method =  GetPosts(field, result_class=WordPressPage)
         results = self.wpcall(method)
@@ -40,7 +40,7 @@ class ShowAction(Action):
 
         method = None
         if self.args.query:
-            method = GetPost(_get_postid())
+            method = GetPost(self.get_postid())
         else:
             method = GetPosts(field)
         results = self.wpcall(method)

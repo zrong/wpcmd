@@ -259,6 +259,8 @@ class UpdateAction(Action):
         return txt, attach_ids
 
     def _update_term(self):
+        """update term's info to wordpress.
+        """
         q = self.args.query 
         term = None
         query = self.get_term_query()
@@ -274,13 +276,13 @@ class UpdateAction(Action):
                 term.name = q[1]
                 if len(q)>2:
                     term.description = q[2]
-                # post_get can not support parent.
+                # post_tag can not support parent.
                 if term.taxonomy == 'post_tag':
                     term.parent = None
                 issucc = self.wpcall(EditTerm(term.id, term))
                 if issucc:
-                    self.conf.save_term(term, typ)
-                    self.conf.save_to_file()
+                    self.cache.save_term(term, typ)
+                    self.cache.save_to_file()
                     slog.info('The term %s(%s) has saved.'%(term.slug, term.id))
                 else:
                     slog.info('The term %s(%s) saves unsuccessfully.'%(term.slug,
