@@ -83,6 +83,8 @@ def check_args(argv=None):
         help='Content type of wordpress.')
     pu.add_argument('-q', '--query', nargs='*',
         help='The options for query.')
+    pu.add_argument('-o', '--output', type=str,
+        help='Write output text to a file.')
 
     # Add site argument to new/update/show.
     for subp in (pn, ps, pu):

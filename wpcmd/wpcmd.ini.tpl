@@ -20,4 +20,5 @@ work 		= $WORK
 draft 		= draft
 page 		= page
 post 		= post
+output 		= output
 media 		= media

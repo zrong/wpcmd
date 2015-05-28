@@ -12,16 +12,14 @@ import mimetypes
 import shutil
 from string import Template
 from xmlrpc.client import Binary
-import markdown
-from markdown.extensions.codehilite import CodeHiliteExtension
-from markdown.extensions.fenced_code import (FencedCodeExtension,
-        FencedBlockPreprocessor)
-from zrong.base import DictBase, slog, read_file, write_file, write_by_templ
+from zrong import slog
+from zrong.base import (DictBase, read_file, write_file, write_by_templ)
 from wpcmd.base import Action
 from wordpress_xmlrpc import (WordPressPost, WordPressPage)
 from wordpress_xmlrpc.methods.posts import (GetPost, EditPost, NewPost)
 from wordpress_xmlrpc.methods.media import (UploadFile)
 from wordpress_xmlrpc.methods.taxonomies import (GetTerm, EditTerm)
+import wpcmd.md
 
 class UpdateAction(Action):
 
@@ -67,25 +65,7 @@ class UpdateAction(Action):
                 return None, None, None, None
             txt = read_file(afile)
 
-        FencedBlockPreprocessor.FENCED_BLOCK_RE = re.compile(r'''
-(?P<fence>^(?:~{3,}|`{3,}))[ ]*         # Opening ``` or ~~~
-# Optional {, lang="lang" or lang
-(\{?\.?(?:lang=")?(?P<lang>[a-zA-Z0-9_+-]*)"?)?[ ]*
-# Optional highlight lines, single- or double-quote-delimited
-(hl_lines=(?P<quot>"|')(?P<hl_lines>.*?)(?P=quot))?[ ]*
-}?[ ]*\n                                # Optional closing }
-(?P<code>.*?)(?<=\n)
-(?P=fence)[ ]*$''', re.MULTILINE | re.DOTALL | re.VERBOSE)
-        fencedcode = FencedCodeExtension()
-        codehilite = CodeHiliteExtension(linenums=False, guess_lang=False)
-        md = markdown.Markdown(extensions=[
-            'markdown.extensions.meta',
-            'markdown.extensions.tables',
-            fencedcode,
-            codehilite,
-            ])
-
-        html = md.convert(txt)
+        html, md = wpcmd.md.convert(txt)
         meta = md.Meta
 
         adict = self._get_article_metadata(meta)
@@ -196,6 +176,17 @@ class UpdateAction(Action):
 
     def _update_an_article(self, postid):
         afile, aname = self.conf.get_article(postid, self.args.type)
+
+        # If output is provided, write the html to a file and abort.
+        if self.args.output:
+            html, meta, txt, medias = self._get_article_content(afile)
+            print('output', self.args.output)
+            print('hhh', html)
+            out = self.args.output if os.path.isabs(self.args.output) else \
+                    self.conf.get_path(self.conf.get('directory', 'output'), self.args.output)
+            if html:
+                write_file(out, html)
+            return
         html, meta, txt, medias = self._get_and_update_article_content(afile)
         if not html:
             return
