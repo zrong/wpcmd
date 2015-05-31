@@ -12,7 +12,8 @@ from markdown.extensions.codehilite import CodeHiliteExtension
 from markdown.extensions.fenced_code import (FencedCodeExtension,
         FencedBlockPreprocessor)
 
-def convert(txt):
+# gvdir = graphviz directory
+def convert(txt, gv_odir, gv_bdir='media/draft', gv_namepre=""):
     FencedBlockPreprocessor.FENCED_BLOCK_RE = re.compile(r'''
 (?P<fence>^(?:~{3,}|`{3,}))[ ]*         # Opening ``` or ~~~
 # Optional {, lang="lang" or lang
@@ -22,14 +23,26 @@ def convert(txt):
 }?[ ]*\n                                # Optional closing }
 (?P<code>.*?)(?<=\n)
 (?P=fence)[ ]*$''', re.MULTILINE | re.DOTALL | re.VERBOSE)
+
     fencedcode = FencedCodeExtension()
     codehilite = CodeHiliteExtension(linenums=False, guess_lang=False)
-    md = markdown.Markdown(extensions=[
-        'markdown.extensions.meta',
-        'markdown.extensions.tables',
-        fencedcode,
-        codehilite,
-        ])
+
+    md = markdown.Markdown(
+            extensions=[
+                'markdown.extensions.meta',
+                'markdown.extensions.tables',
+                fencedcode,
+                codehilite,
+                'graphviz',
+                ],
+            extension_configs={
+                'graphviz':{
+                    'FORMAT':'png', 
+                    'OUTPUT_DIR':gv_odir, 
+                    'BASE_DIR':gv_bdir,
+                    'NAME_PRE':gv_namepre}
+                }
+            )
 
     html = md.convert(txt)
-    return html, md
+    return html, md, '\n'.join(md.lines)

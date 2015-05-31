@@ -125,7 +125,7 @@ class Conf(object):
         return workdir
 
     def get_media(self, *path):
-        mediadir = self.get_path(self.directory.media)
+        mediadir = self.get_path(self.get('directory', 'media'))
         if path:
             return os.path.join(mediadir, *path)
         return mediadir

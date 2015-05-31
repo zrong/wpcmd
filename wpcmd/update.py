@@ -55,7 +55,7 @@ class UpdateAction(Action):
             adict.attachments = [att.strip() for att in attachments[0].split(',')]
         return adict
 
-    def _get_article_content(self, afile, istxt=False):
+    def _get_article_content(self, afile, output=None, istxt=False):
         txt = None
         if istxt:
             txt = afile
@@ -65,11 +65,33 @@ class UpdateAction(Action):
                 return None, None, None, None
             txt = read_file(afile)
 
-        html, md = wpcmd.md.convert(txt)
-        meta = md.Meta
+        # Get a pre-name from a file.
+        def _get_mainname(afile):
+            return os.path.splitext(os.path.split(afile)[1])[0]
 
+        namepre = _get_mainname(afile)
+        media = self.conf.get('directory', 'media')
+        odir = self.conf.get_path(media, 'draft')
+        bdir = '%s/draft'%media
+        if output:
+            namepre = _get_mainname(output)
+            odir = os.path.join(os.path.split(output)[0], 'media')
+            bdir = 'media'
+        if not os.path.exists(odir):
+            os.makedirs(odir)
+
+        # The txt has processed by extensions.
+        html, md, txt = wpcmd.md.convert(txt, odir, bdir, namepre)
+        meta = md.Meta
+        medias = self._get_medias(txt)
+
+#        if md.GraphvizCharts:
+#            medias = [(item['file'], item['name']) for item in md.GraphvizCharts]
+#        else:
+#            medias = self._get_medias(txt)
+#
         adict = self._get_article_metadata(meta)
-        return html,adict,txt,self._get_medias(txt)
+        return html,adict,txt,medias
 
     def _get_and_update_article_content(self, afile, istxt=False):
         html, meta, txt, medias = self._get_article_content(afile)
@@ -101,15 +123,24 @@ class UpdateAction(Action):
                         txt, 0, re.M)
 
             write_file(afile, txt)
-            html, meta, txt, medias = self._get_article_content(txt, True)
+            html, meta, txt, medias = self._get_article_content(txt, istxt=True)
             if medias:
-                slog.error('Medias in the article is maybe wrong!')
+                slog.error('Medias in the article are maybe wrong!')
                 return None, None, None, None
         return html, meta, txt, medias
 
     def _get_medias(self, txt):
+        """Get media files form markdown text
+        """
         return [(item, item.split('/')[-1]) for item in \
                 re.findall(u'%s/draft/[\w\.\-]*'%self.conf.get('directory', 'media'), txt, re.M)]
+
+    def _write_html_file(self, afile):
+        out = self.args.output if os.path.isabs(self.args.output) else \
+                self.conf.get_path(self.conf.get('directory', 'output'), self.args.output)
+        html, meta, txt, medias = self._get_article_content(afile, output=out)
+        if html:
+            write_file(out, html)
 
     def _update_a_draft(self):
         postid = self.get_postid()
@@ -117,6 +148,12 @@ class UpdateAction(Action):
             slog.warning('Please provide a post id!')
             return
         afile, aname = self.conf.get_draft(postid)
+
+        # If output is provided, write the html to a file and abort.
+        if self.args.output:
+            self._write_html_file(afile)
+            return
+
         html, meta, txt, medias = self._get_and_update_article_content(afile)
         if not html:
             return
@@ -133,7 +170,7 @@ class UpdateAction(Action):
             post = WordPressPage()
         else:
             post = WordPressPost()
-            post.terms = self.get_terms_from_meta(meta.category, meta.tags)
+            post.terms = self.cache.get_terms_from_meta(meta.category, meta.tags)
             if not post.terms:
                 slog.warning('Please provide some terms.')
                 return
@@ -179,14 +216,9 @@ class UpdateAction(Action):
 
         # If output is provided, write the html to a file and abort.
         if self.args.output:
-            html, meta, txt, medias = self._get_article_content(afile)
-            print('output', self.args.output)
-            print('hhh', html)
-            out = self.args.output if os.path.isabs(self.args.output) else \
-                    self.conf.get_path(self.conf.get('directory', 'output'), self.args.output)
-            if html:
-                write_file(out, html)
+            self._write_html_file(afile)
             return
+
         html, meta, txt, medias = self._get_and_update_article_content(afile)
         if not html:
             return
