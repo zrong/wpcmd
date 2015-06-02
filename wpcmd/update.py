@@ -55,16 +55,7 @@ class UpdateAction(Action):
             adict.attachments = [att.strip() for att in attachments[0].split(',')]
         return adict
 
-    def _get_article_content(self, afile, output=None, istxt=False):
-        txt = None
-        if istxt:
-            txt = afile
-        else:
-            if not os.path.exists(afile):
-                slog.error('The file "%s" is inexistance!'%afile)
-                return None, None, None, None
-            txt = read_file(afile)
-
+    def _get_output_arg(self, afile, output=None):
         # Get a pre-name from a file.
         def _get_mainname(afile):
             return os.path.splitext(os.path.split(afile)[1])[0]
@@ -79,17 +70,26 @@ class UpdateAction(Action):
             bdir = 'media'
         if not os.path.exists(odir):
             os.makedirs(odir)
+        return odir, bdir, namepre
 
-        # The txt has processed by extensions.
-        html, md, txt = wpcmd.md.convert(txt, odir, bdir, namepre)
+
+    def _get_article_content(self, afile, output=None):
+        if not os.path.exists(afile):
+            slog.error('The file "%s" is inexistance!'%afile)
+            return None, None, None, None
+        txt = read_file(afile)
+
+        odir, bdir, namepre = self._get_output_arg(afile, output)
+
+        html, md, linestxt = wpcmd.md.convert(txt, odir, bdir, namepre)
         meta = md.Meta
-        medias = self._get_medias(txt)
+        medias = None
 
-#        if md.GraphvizCharts:
-#            medias = [(item['file'], item['name']) for item in md.GraphvizCharts]
-#        else:
-#            medias = self._get_medias(txt)
-#
+        if md.GraphvizCharts:
+            medias = [(item['file'], item['name']) for item in md.GraphvizCharts]
+        else:
+            medias = self._get_medias(txt)
+
         adict = self._get_article_metadata(meta)
         return html,adict,txt,medias
 
@@ -106,6 +106,9 @@ class UpdateAction(Action):
             attach = 3
 
         if medias and attach>0:
+            # TODO zrong 2015-06-02
+            # MUST change this txt to include graphviz image
+            # graphviz is specially
             txt,attachids = self._update_medias(medias, txt)
             idstxt = ','.join(attachids)
             if attach == 1:
@@ -123,11 +126,16 @@ class UpdateAction(Action):
                         txt, 0, re.M)
 
             write_file(afile, txt)
-            html, meta, txt, medias = self._get_article_content(txt, istxt=True)
+            print('txt' ,txt)
+            medias = self._get_medias(txt)
             if medias:
                 slog.error('Medias in the article are maybe wrong!')
                 return None, None, None, None
-        return html, meta, txt, medias
+            odir, bdir, namepre = self._get_output_arg(afile)
+            html, md, linestxt = wpcmd.md.convert(txt, odir, bdir, namepre)
+            adict = self._get_article_metadata(md.Meta)
+        # medias is must be None
+        return html, adict, txt, None
 
     def _get_medias(self, txt):
         """Get media files form markdown text
