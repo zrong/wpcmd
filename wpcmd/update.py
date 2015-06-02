@@ -133,9 +133,9 @@ class UpdateAction(Action):
                 return None, None, None, None
             odir, bdir, namepre = self._get_output_arg(afile)
             html, md, linestxt = wpcmd.md.convert(txt, odir, bdir, namepre)
-            adict = self._get_article_metadata(md.Meta)
+            meta = self._get_article_metadata(md.Meta)
         # medias is must be None
-        return html, adict, txt, None
+        return html, meta, txt, None
 
     def _get_medias(self, txt):
         """Get media files form markdown text
