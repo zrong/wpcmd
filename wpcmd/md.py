@@ -9,40 +9,36 @@
 import re
 import markdown
 from markdown.extensions.codehilite import CodeHiliteExtension
-from markdown.extensions.fenced_code import (FencedCodeExtension,
-        FencedBlockPreprocessor)
 
 # gvdir = graphviz directory
 def convert(txt, gv_odir, gv_bdir='media/draft', gv_namepre=""):
-    FencedBlockPreprocessor.FENCED_BLOCK_RE = re.compile(r'''
-(?P<fence>^(?:~{3,}|`{3,}))[ ]*         # Opening ``` or ~~~
-# Optional {, lang="lang" or lang
-(\{?\.?(?:lang=")?(?P<lang>[a-zA-Z0-9_+-]*)"?)?[ ]*
-# Optional highlight lines, single- or double-quote-delimited
-(hl_lines=(?P<quot>"|')(?P<hl_lines>.*?)(?P=quot))?[ ]*
-}?[ ]*\n                                # Optional closing }
-(?P<code>.*?)(?<=\n)
-(?P=fence)[ ]*$''', re.MULTILINE | re.DOTALL | re.VERBOSE)
-
-    fencedcode = FencedCodeExtension()
     codehilite = CodeHiliteExtension(linenums=False, guess_lang=False)
 
     md = markdown.Markdown(
             extensions=[
-                'markdown.extensions.meta',
+                'metadata',
                 'markdown.extensions.tables',
-                fencedcode,
                 codehilite,
-                'graphviz',
+                'fenced_code_extra',
                 ],
             extension_configs={
-                'graphviz':{
-                    'FORMAT':'png', 
-                    'OUTPUT_DIR':gv_odir, 
-                    'BASE_DIR':gv_bdir,
-                    'NAME_PRE':gv_namepre}
+                'fenced_code_extra':{
+                    'graphviz':{'OUTPUT_DIR':gv_odir,'BASE_URL':gv_bdir,'NAME_PRE':gv_namepre},
+                    }
                 }
             )
 
     html = md.convert(txt)
-    return html, md, '\n'.join(md.lines)
+
+    graphviz = _get_extra_output(md, 'graphviz')
+    if graphviz:
+        txt = '%s\n\n%s'%(md.metadata.text(), graphviz['text'])
+
+    return html, md, txt
+
+def _get_extra_output(md, name):
+    extra_output = getattr(md, 'fenced_code_extra_output', None)
+    if not extra_output:
+        return None
+    return extra_output.get(name)
+

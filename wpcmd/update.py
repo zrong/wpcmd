@@ -23,6 +23,12 @@ import wpcmd.md
 
 class UpdateAction(Action):
 
+    def __init__(self, gconf, gtermcache, gargs, gparser):
+        super(UpdateAction, self).__init__(gconf, gtermcache, gargs, gparser)
+        self.media_url_re = re.compile(r'wp-content/.*/(\d{4}/\d{2}/).*')
+        self.media_draft_re = re.compile(r'%s/draft/[\w\.\-]*'%
+                self.conf.get('directory', 'media'), re.M)
+
     def _get_article_metadata(self, meta):
         adict = DictBase()
         adict.title = meta['title'][0]
@@ -62,16 +68,15 @@ class UpdateAction(Action):
 
         namepre = _get_mainname(afile)
         media = self.conf.get('directory', 'media')
-        odir = self.conf.get_path(media, 'draft')
-        bdir = '%s/draft'%media
+        outputdir = self.conf.get_path(media, 'draft')
+        baseurl = '%s/draft/'%media
         if output:
             namepre = _get_mainname(output)
-            odir = os.path.join(os.path.split(output)[0], 'media')
-            bdir = 'media'
-        if not os.path.exists(odir):
-            os.makedirs(odir)
-        return odir, bdir, namepre
-
+            outputdir = os.path.join(os.path.split(output)[0], 'media')
+            baseurl = 'media/'
+        if not os.path.exists(outputdir):
+            os.makedirs(outputdir)
+        return outputdir, baseurl, namepre
 
     def _get_article_content(self, afile, output=None):
         if not os.path.exists(afile):
@@ -79,24 +84,18 @@ class UpdateAction(Action):
             return None, None, None, None
         txt = read_file(afile)
 
-        odir, bdir, namepre = self._get_output_arg(afile, output)
+        outputdir, baseurl, namepre = self._get_output_arg(afile, output)
 
-        html, md, linestxt = wpcmd.md.convert(txt, odir, bdir, namepre)
-        meta = md.Meta
-        medias = None
-
-        if md.GraphvizCharts:
-            medias = [(item['file'], item['name']) for item in md.GraphvizCharts]
-        else:
-            medias = self._get_medias(txt)
-
-        adict = self._get_article_metadata(meta)
+        html, md, txt = wpcmd.md.convert(txt, outputdir, baseurl, namepre)
+        medias = self._get_medias(txt)
+        adict = self._get_article_metadata(md.metadata)
         return html,adict,txt,medias
 
     def _get_and_update_article_content(self, afile, istxt=False):
         html, meta, txt, medias = self._get_article_content(afile)
         if not html:
             return  None, None, None, None
+        # Update ATTACHMENTS in metadata.
         attach = 0
         if not meta.attachments:
             attach = 1
@@ -106,10 +105,7 @@ class UpdateAction(Action):
             attach = 3
 
         if medias and attach>0:
-            # TODO zrong 2015-06-02
-            # MUST change this txt to include graphviz image
-            # graphviz is specially
-            txt,attachids = self._update_medias(medias, txt)
+            urls,attachids = self._update_medias(medias)
             idstxt = ','.join(attachids)
             if attach == 1:
                 # Add attachments to the TOF.
@@ -125,23 +121,29 @@ class UpdateAction(Action):
                         'Attachments: '+ ','.join(meta.attachments),
                         txt, 0, re.M)
 
+            # Replace draft url to true url.
+            i = 0
+            for path, name in medias:
+                txt = txt.replace(path, urls[i])
+                i = i+1
+
+            # Rewrite the text with modified metadata.
             write_file(afile, txt)
             print('txt' ,txt)
             medias = self._get_medias(txt)
             if medias:
                 slog.error('Medias in the article are maybe wrong!')
                 return None, None, None, None
-            odir, bdir, namepre = self._get_output_arg(afile)
-            html, md, linestxt = wpcmd.md.convert(txt, odir, bdir, namepre)
-            meta = self._get_article_metadata(md.Meta)
+            outputdir, baseurl, namepre = self._get_output_arg(afile)
+            html, md, txt = wpcmd.md.convert(txt, outputdir, baseurl, namepre)
+            meta = self._get_article_metadata(md.metadata)
         # medias is must be None
         return html, meta, txt, None
 
     def _get_medias(self, txt):
         """Get media files form markdown text
         """
-        return [(item, item.split('/')[-1]) for item in \
-                re.findall(u'%s/draft/[\w\.\-]*'%self.conf.get('directory', 'media'), txt, re.M)]
+        return [(item, item.split('/')[-1]) for item in self.media_draft_re.findall(txt)]
 
     def _write_html_file(self, afile):
         out = self.args.output if os.path.isabs(self.args.output) else \
@@ -265,10 +267,10 @@ class UpdateAction(Action):
         else:
             slog.info('Update %s fail!'%postid)
 
-    def _update_medias(self, medias, txt):
+    def _update_medias(self, medias):
         slog.info('Ready for upload some medias to WordPress.')
         attach_ids = []
-        urlre = re.compile(r'wp-content/.*/(\d{4}/\d{2}/).*')
+        urls = []
         for path, name in medias:
             bits = None
             mediafile = self.conf.get_path(path)
@@ -280,14 +282,15 @@ class UpdateAction(Action):
             amedia['type'] = mimetypes.guess_type(path)[0]
             amedia['bits'] = bits
             upd = self.wpcall(UploadFile(amedia))
-            txt = txt.replace(path, upd['url'])
-            match = urlre.search(upd['url'])
+            url = upd['url']
+            urls.append(url)
+            match = self.media_url_re.search(url)
             targetdir = self.conf.get_media(match.group(1))
             if not os.path.exists(targetdir):
                 os.makedirs(targetdir)
             attach_ids.append(upd['id'])
             shutil.move(mediafile, os.path.join(targetdir, name))
-        return txt, attach_ids
+        return urls, attach_ids
 
     def _update_term(self):
         """update term's info to wordpress.

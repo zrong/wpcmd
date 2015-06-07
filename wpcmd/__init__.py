@@ -6,7 +6,7 @@
 # Modification 2015-05-28
 #########################################
 
-__all__ = ['write', 'wordpress']
+__all__ = ['write', 'wordpress', 'update']
 
 import os
 import sys
