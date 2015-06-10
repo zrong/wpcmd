@@ -1,11 +1,20 @@
+#########################################
+# mdx_metadata.py
+#
+# metadata handing for markdown using sorteddict.
+#
+# Modifier zrong(zengrong.net)
+# Creation 2015-06-07
+# Modification 2015-06-10
+#########################################
+
 """
 Meta Data Extension for Python-Markdown
 =======================================
 
 This extension adds Meta Data handling to markdown.
 
-See <https://pythonhosted.org/Markdown/extensions/meta_data.html> 
-for documentation.
+See <https://pythonhosted.org/Markdown/extensions/meta_data.html> for documentation.
 
 Original code Copyright 2007-2008 [Waylan Limberg](http://achinghead.com).
 
@@ -34,14 +43,14 @@ class MetadataExtension (Extension):
 
 class Metadata(OrderedDict):
 
-    def __getattr__(self, name):
-        return self[name]
+    # def __getattr__(self, name):
+    #     return self[name]
 
-    def __setattr__(self, name, value):
-        self[name] = value
-        
-    def __delattr__(self, name):
-        del self[name]
+    # def __setattr__(self, name, value):
+    #     self[name] = value
+    #     
+    # def __delattr__(self, name):
+    #     del self[name]
 
     def text(self):
         lines = []
