@@ -139,7 +139,7 @@ class GraphvizProcessor(object):
         while True:
             if m:
                 graph_conf = self.get_graph_config(m, self.graph_num)
-                print(graph_conf)
+                # print(graph_conf)
 
                 placeholder = self.graph(graph_conf)
                 graph_conf['placeholder'] = placeholder

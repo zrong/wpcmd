@@ -88,8 +88,8 @@ class UpdateAction(Action):
 
         html, md, txt = wpcmd.md.convert(txt, outputdir, baseurl, namepre)
         medias = self._get_medias(txt)
-        adict = self._get_article_metadata(md.metadata)
-        return html,adict,txt,medias
+        meta = self._get_article_metadata(md.metadata)
+        return html,meta,txt,medias
 
     def _get_and_update_article_content(self, afile, istxt=False):
         html, meta, txt, medias = self._get_article_content(afile)
@@ -129,7 +129,6 @@ class UpdateAction(Action):
 
             # Rewrite the text with modified metadata.
             write_file(afile, txt)
-            print('txt' ,txt)
             medias = self._get_medias(txt)
             if medias:
                 slog.error('Medias in the article are maybe wrong!')
@@ -149,6 +148,7 @@ class UpdateAction(Action):
         out = self.args.output if os.path.isabs(self.args.output) else \
                 self.conf.get_path(self.conf.get('directory', 'output'), self.args.output)
         html, meta, txt, medias = self._get_article_content(afile, output=out)
+
         if html:
             write_file(out, html)
 
@@ -274,7 +274,7 @@ class UpdateAction(Action):
         for path, name in medias:
             bits = None
             mediafile = self.conf.get_path(path)
-            print(mediafile)
+            slog.info('Upload media file:', mediafile)
             with open(mediafile, 'rb') as m:
                 bits = Binary(m.read()).data
             amedia = {}

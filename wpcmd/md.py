@@ -3,7 +3,7 @@
 #
 # Author zrong(zengrong.net)
 # Creation 2015-05-28
-# Modification 2015-05-28
+# Modification 2015-06-11
 #########################################
 
 import re
@@ -23,7 +23,10 @@ def convert(txt, gv_odir, gv_bdir='media/draft', gv_namepre=""):
                 ],
             extension_configs={
                 'fenced_code_extra':{
-                    'graphviz':{'OUTPUT_DIR':gv_odir,'BASE_URL':gv_bdir,'NAME_PRE':gv_namepre},
+                    'graphviz':{
+                        'OUTPUT_DIR':gv_odir,
+                        'BASE_URL':gv_bdir,
+                        'NAME_PRE':gv_namepre},
                     }
                 }
             )
@@ -32,7 +35,9 @@ def convert(txt, gv_odir, gv_bdir='media/draft', gv_namepre=""):
 
     graphviz = _get_extra_output(md, 'graphviz')
     if graphviz:
-        txt = '%s\n\n%s'%(md.metadata.text(), graphviz['text'])
+        # The text will inclued a content with all converted image from graphviz codes.
+        # We need replace original text use this text to avoid the repeted conversion from graphviz codes.
+        txt = graphviz['text']
 
     return html, md, txt
 

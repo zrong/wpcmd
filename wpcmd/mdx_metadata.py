@@ -55,7 +55,7 @@ class Metadata(OrderedDict):
     def text(self):
         lines = []
         for key, value in self.items():
-            lines.append('%s: %s'%(key, value))
+            lines.append('%s: %s'%(key, ",".join(value)))
         return '\n'.join(lines)
 
 class MetadataPreprocessor(Preprocessor):
