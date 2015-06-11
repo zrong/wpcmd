@@ -7,12 +7,26 @@
 ########################################
 import shutil
 import datetime
+from collections import OrderedDict
 from zrong import slog
-from zrong.base import write_by_templ
+from zrong.base import (write_by_templ, write_file)
 from wpcmd.base import Action
 from wordpress_xmlrpc import (WordPressTerm)
 from wordpress_xmlrpc.methods.taxonomies import (NewTerm,GetTerm)
 from wpcmd import BlogError
+
+metatpl = [
+    ('title', ''),
+    ('date', ''),
+    ('modified', ''),
+    ('author', ''),
+    ('postid', '$POSTID'),
+    ('slug', '$SLUG'),
+    ('nicename', ''),
+    ('attachments', '$ATTACHMENTS'),
+    ('posttype', ''),
+    ('poststatus', 'draft'),
+    ]
 
 class NewAction(Action):
 
@@ -26,21 +40,20 @@ class NewAction(Action):
             slog.critical(e)
             return
         dt = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        subdict = {
-                'TITLE':'',
-                'DATE':dt,
-                'MODIFIED':dt,
-                'AUTHOR':self.conf.get_user(),
-                'NICENAME':'',
-                'CATEGORY':'technology',
-                'TAG':'',
-                'POSTTYPE':self.args.type,
-                'POSTSTATUS':'draft',
-                }
-        write_by_templ(self.conf.get_path('templates', 'article.md'), 
-                dfile,
-                subdict,
-                True)
+        metatxt = []
+        tpl = OrderedDict(metatpl)
+        tpl['date'] = dt
+        tpl['modified'] = dt
+        tpl['author'] = self.conf.get_user()
+        tpl['posttype'] = self.args.type
+        if self.args.type == 'post':
+            tpl['tags'] = ''
+            tpl['category'] = 'technology'
+
+        for k,v in tpl.items():
+            metatxt.append('%s: %s'%(k, v))
+
+        write_file(dfile, '\n'.join(metatxt))
         slog.info('The draft file "%s" has created.'%dfile)
 
     def _new_term(self):
