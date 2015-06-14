@@ -8,8 +8,8 @@
 import shutil
 import datetime
 from collections import OrderedDict
-from zrong import slog
-from zrong.base import (write_by_templ, write_file)
+from rookout import slog
+from rookout.base import (write_file)
 from wpcmd.base import Action
 from wordpress_xmlrpc import (WordPressTerm)
 from wordpress_xmlrpc.methods.taxonomies import (NewTerm,GetTerm)

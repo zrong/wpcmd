@@ -12,8 +12,9 @@ import mimetypes
 import shutil
 from string import Template
 from xmlrpc.client import Binary
-from zrong import slog
-from zrong.base import (DictBase, read_file, write_file, write_by_templ)
+from rookout import slog
+from rookout.conf import PYConf
+from rookout.base import (read_file, write_file, write_by_templ)
 from wpcmd.base import Action
 from wordpress_xmlrpc import (WordPressPost, WordPressPage)
 from wordpress_xmlrpc.methods.posts import (GetPost, EditPost, NewPost)
@@ -30,7 +31,7 @@ class UpdateAction(Action):
                 self.conf.get('directory', 'media'), re.M)
 
     def _get_article_metadata(self, meta):
-        adict = DictBase()
+        adict = PYConf()
         adict.title = meta['title'][0]
         adict.postid = meta['postid'][0]
         adict.nicename = meta['nicename'][0]
@@ -105,7 +106,11 @@ class UpdateAction(Action):
             attach = 3
 
         if medias and attach>0:
-            urls,attachids = self._update_medias(medias)
+            try:
+                urls,attachids = self._update_medias(medias)
+            except OSError as e:
+                slog.error(e)
+                return None, None, None, None
             idstxt = ','.join(attachids)
             if attach == 1:
                 # Add attachments to the TOF.
@@ -274,7 +279,7 @@ class UpdateAction(Action):
         for path, name in medias:
             bits = None
             mediafile = self.conf.get_path(path)
-            slog.info('Upload media file:', mediafile)
+            slog.info('Upload media file:%s', mediafile)
             with open(mediafile, 'rb') as m:
                 bits = Binary(m.read()).data
             amedia = {}

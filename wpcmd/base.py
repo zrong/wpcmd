@@ -19,8 +19,9 @@ from wordpress_xmlrpc import (Client,
 from wordpress_xmlrpc.exceptions import InvalidCredentialsError 
 from wordpress_xmlrpc.methods.taxonomies import (GetTerms)
 from pkg_resources import (resource_filename, resource_string)
-from zrong import slog
-from zrong.base import (DictBase, list_dir, read_file, write_file)
+from rookout import slog
+from rookout.base import (list_dir, read_file, write_file)
+from rookout.conf import PYConf
 
 
 class Conf(object):
@@ -267,7 +268,7 @@ class Action(object):
             self.parser.print_help()
 
 
-class TermCache(DictBase):
+class TermCache(PYConf):
     """ A cache for terms.
     """
 
@@ -282,7 +283,7 @@ class TermCache(DictBase):
         super().save_to_file(self.cachefile)
 
     def save_terms(self, terms, taxname):
-        termdict = DictBase()
+        termdict = PYConf()
         for term in terms:
             self.save_term(term, taxname, termdict)
         self[taxname] = termdict
@@ -291,7 +292,7 @@ class TermCache(DictBase):
     def save_term(self, term, taxname, termdict=None):
         if termdict == None:
             termdict = self[taxname]
-        termdict[term.slug] = DictBase({
+        termdict[term.slug] = PYConf({
             'id':term.id,
             'group':term.group,
             'taxonomy':term.taxonomy,

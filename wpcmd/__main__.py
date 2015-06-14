@@ -9,11 +9,6 @@ import os
 import sys
 
 
-try:
-    import zrong
-except ImportError:
-    sys.path.insert(0, os.getenv('zrongpy'))
-
 if not __package__:
     path = os.path.join(os.path.dirname(__file__), os.pardir)
     sys.path.insert(0, path)

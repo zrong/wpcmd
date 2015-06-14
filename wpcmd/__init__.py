@@ -8,12 +8,18 @@
 
 __all__ = ['write', 'wordpress', 'update']
 
-import os
 import sys
+import os
 import logging
 import importlib
 import argparse
-from zrong import slog, add_log_handler
+
+try:
+    import rookout
+except ImportError:
+    sys.path.insert(0, os.getenv('zrongpy'))
+
+from rookout import slog, add_log_handler
 from wpcmd.base import (Conf, TermCache)
 
 add_log_handler(slog,

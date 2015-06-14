@@ -9,8 +9,8 @@ import os
 import re
 import markdown
 import shutil
-from zrong import slog
-from zrong.base import read_file, list_dir
+from rookout import slog
+from rookout.base import read_file, list_dir
 from wpcmd.base import Action
 
 class WriteAction(Action):
