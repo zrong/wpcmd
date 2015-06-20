@@ -39,7 +39,7 @@ class WriteAction(Action):
         #names.sort(key=lambda item : item['index'])
         names.sort(key=itemgetter('index'))
         names = ['1. {time} \[**{name}**\] [{title}]'
-        '(http://zengrong.net/post/%s.htm)'.format(**item) for item in names]
+        '(http://zengrong.net/post/{name}.htm)'.format(**item) for item in names]
         rf.write('\n'.join(names))
 
     def _get_title_and_date(self, path):
