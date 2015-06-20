@@ -28,19 +28,20 @@ class WriteAction(Action):
             if not title or not time:
                 continue
             names.append({'name':name,'title':title,'time':time})
+        fmt = None
         if is_post:
             for item in names:
                 item['index'] = int(item['name'])
                 t = item['time'].split('-')
+            fmt = '1. {time} \[**{name}**\] [{title}](http://zengrong.net/post/{name}.htm)'
         else:
             for item in names:
                 t = item['time'].split('-')
                 item['index'] = date(int(t[0]), int(t[1]), int(t[2]))
+            fmt = '1. {time} \[**{name}**\] [{title}](http://zengrong.net/{name})'
         #names.sort(key=lambda item : item['index'])
         names.sort(key=itemgetter('index'))
-        names = ['1. {time} \[**{name}**\] [{title}]'
-        '(http://zengrong.net/post/{name}.htm)'.format(**item) for item in names]
-        rf.write('\n'.join(names))
+        rf.write('\n'.join([fmt.format(**item) for item in names]))
 
     def _get_title_and_date(self, path):
         title = None
