@@ -93,7 +93,7 @@ def check_args(argv=None):
         help='Write output text to a file.')
 
     # Add site argument to new/update/show.
-    for subp in (pn, ps, pu):
+    for subp in (pn, ps, pu, pw):
         subp.add_argument('-s', '--site', type=str, default='site',
             help='Set the site section in ini config files. Default value is "site".')
 

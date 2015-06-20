@@ -3,12 +3,15 @@
 #
 # Author zrong(zengrong.net)
 # Creation 2014-11-18
+# Modification 2015-06-20
 #########################################
 
 import os
 import re
 import markdown
 import shutil
+from operator import (attrgetter, itemgetter)
+from datetime import date
 from rookout import slog
 from rookout.base import read_file, list_dir
 from wpcmd.base import Action
@@ -16,43 +19,54 @@ from wpcmd.base import Action
 class WriteAction(Action):
 
     def _write_list(self, adir, rf):
-        rf.write('# '+adir+'\n\n')
+        rf.write('\n\n# '+adir+'\n\n')
         is_post = adir == 'post'
+        dir_path = self.conf.get_path(adir)
         names = []
         for adir, name, fpath in self.conf.get_mdfiles(adir):
-            if is_post:
-                names.append(int(name))
-            else:
-                names.append(name)
+            title, time = self._get_title_and_date(os.path.join(dir_path, name+'.md'))
+            if not title or not time:
+                continue
+            names.append({'name':name,'title':title,'time':time})
         if is_post:
-            names = sorted(names)
-        for name in names:
-            self._write_a_file(adir, str(name), rf)
-        rf.write('\n')
+            for item in names:
+                item['index'] = int(item['name'])
+                t = item['time'].split('-')
+        else:
+            for item in names:
+                t = item['time'].split('-')
+                item['index'] = date(int(t[0]), int(t[1]), int(t[2]))
+        #names.sort(key=lambda item : item['index'])
+        names.sort(key=itemgetter('index'))
+        names = ['1. {time} \[**{name}**\] [{title}]'
+        '(http://zengrong.net/post/%s.htm)'.format(**item) for item in names]
+        rf.write('\n'.join(names))
 
-    def _write_a_file(self, adir, name, rf):
-        with open(os.path.join(adir, str(name)+'.md'), 'r', encoding='utf-8') as f:
-            fmt = '1. %s \[**%s**\] [%s](http://zengrong.net/post/%s.htm)\n'
-            time = None
-            title = None
+    def _get_title_and_date(self, path):
+        title = None
+        time = None
+        with open(path, 'r', encoding='utf-8') as f:
             for line in f:
-                if line.startswith('Title:'):
+                if line.lower().startswith('title:'):
                     title = line[6:].strip()
-                elif line.startswith('Date:'):
+                    title = title.replace('_', r'\_')
+                    continue
+                if line.lower().startswith('date:'):
                     time = line[6:16]
+                    continue
+                if time and title:
                     break
-            if time and title:
-                title = title.replace('_', r'\_')
-                rf.write(fmt%(time, name, title, name))
-
+        if not time or not title:
+            slog.error('There is NOT title or date in this article: [%s]!'%path)
+            return None, None
+        return title, time
 
     def _write_readme(self):
         with open(self.conf.get_path('README.md'), 'w', encoding='utf-8', newline='\n') as f:
             f.write("[zrong's blog](http://zengrong.net) 中的所有文章\n")
-            f.write('==========\n\n')
-            f.write("----------\n\n")
-            self._write_list(self.conf.get_path('page'), f)
-            self._write_list(self.conf.get_path('post'), f)
+            f.write('==========\n\n----------')
+            self._write_list('page', f)
+            self._write_list('post', f)
 
     def _rewrite_url(self, dirname):
         """
@@ -135,6 +149,6 @@ class WriteAction(Action):
         if noAnyArgs and self.parser:
             self.parser.print_help()
 
-def build(gconf, gargs, parser=None):
-    action = WriteAction(gconf, gargs, parser)
+def build(gconf, gcache, gargs, parser=None):
+    action = WriteAction(gconf, gcache, gargs, parser)
     action.build()
