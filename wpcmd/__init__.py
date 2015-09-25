@@ -17,7 +17,7 @@ import argparse
 try:
     import rookout
 except ImportError:
-    sys.path.insert(0, os.getenv('zrongpy'))
+    sys.path.insert(0, os.getenv('rookout'))
 
 from rookout import slog, add_log_handler
 from wpcmd.base import (Conf, TermCache)
