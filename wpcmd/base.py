@@ -70,8 +70,20 @@ class Conf(object):
     def get_password(self):
         return self.ini.get(self.site, 'password')
 
-    def get_url(self):
-        return self.ini.get(self.site, 'url')
+    def get_url(self, only_site=False):
+        url = self.ini.get(self.site, 'url')
+        site = None
+        if url.endswith('/xmlrpc.php'):
+            site = url[:-11]
+        elif url.endswith('/'):
+            site = url[:-1]
+            url = url + 'xmlrpc.php'
+        else:
+            site = url
+            url = url + '/xmlrpc.php'
+        if only_site:
+            return site
+        return url
 
     def set_site(self, site):
         self.site = site
@@ -103,7 +115,7 @@ class Conf(object):
         if name:
             draftfile, draftname = self.get_draft(name)
             if draftname in draftnames:
-                raise BlogError('The draft file "%s" is already existence!'%
+                raise WPError('The draft file "%s" is already existence!'%
                         draftname)
         else:
             name = 1

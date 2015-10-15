@@ -13,7 +13,7 @@ from rookout.base import (write_file)
 from wpcmd.base import Action
 from wordpress_xmlrpc import (WordPressTerm)
 from wordpress_xmlrpc.methods.taxonomies import (NewTerm,GetTerm)
-from wpcmd import BlogError
+from wpcmd import WPError
 
 metatpl = [
     ('title', ''),
@@ -36,7 +36,7 @@ class NewAction(Action):
             name = self.args.query[0]
         try:
             dfile, dname = self.conf.get_new_draft(name)
-        except BlogError as e:
+        except WPError as e:
             slog.critical(e)
             return
         dt = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')

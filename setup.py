@@ -4,6 +4,7 @@
 #
 # Author        zrong(zengrong.net)
 # Creation      2015-04-19
+# Modification  2015-10-15
 ########################################
 
 import os
@@ -11,9 +12,7 @@ from setuptools import setup
 
 requires = []
 
-dependency_links = [
-    'https://github.com/zrong/python/releases/download/v0.2.9/zrong-0.2.9.tar.gz',
-]
+dependency_links = []
 
 entry_points = {
     'console_scripts': [
@@ -31,7 +30,7 @@ classifiers = [
 ]
 
 package_data = {
-    'wpcmd':['build.conf'],
+    'wpcmd':[],
 }
 
 #data_files = [(root, [os.path.join(root, f) for f in files])

@@ -173,8 +173,8 @@ class UpdateAction(Action):
         if not html:
             return
         if meta.poststatus == 'draft':
-            slog.warning('The post status of draft "%s" is "draft", '
-                'please modify it to "publish".'%postid)
+            slog.warning(   'The post status of draft "%s" is "draft", '
+                            'please modify it to "publish".'%postid)
             return
 
         # Update all taxonomy before create a new article.
@@ -197,6 +197,8 @@ class UpdateAction(Action):
         post.user = meta.author
         post.date_modified = meta.modified
         post.post_status = meta.poststatus
+        post.comment_status = "open"
+        post.ping_status = "open"
         postid = self.wpcall(NewPost(post))
 
         if postid:

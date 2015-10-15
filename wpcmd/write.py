@@ -29,16 +29,17 @@ class WriteAction(Action):
                 continue
             names.append({'name':name,'title':title,'time':time})
         fmt = None
+        site_url = self.conf.get_url(only_site=True)
         if is_post:
             for item in names:
                 item['index'] = int(item['name'])
                 t = item['time'].split('-')
-            fmt = '1. {time} \[**{name}**\] [{title}](http://zengrong.net/post/{name}.htm)'
+            fmt =   '1. {time} \[**{name}**\] [{title}]('+site_url+'/post/{name}.htm)'
         else:
             for item in names:
                 t = item['time'].split('-')
                 item['index'] = date(int(t[0]), int(t[1]), int(t[2]))
-            fmt = '1. {time} \[**{name}**\] [{title}](http://zengrong.net/{name})'
+            fmt = '1. {time} \[**{name}**\] [{title}]('+site_url+'/{name})'
         #names.sort(key=lambda item : item['index'])
         names.sort(key=itemgetter('index'))
         rf.write('\n'.join([fmt.format(**item) for item in names]))
@@ -64,7 +65,9 @@ class WriteAction(Action):
 
     def _write_readme(self):
         with open(self.conf.get_path('README.md'), 'w', encoding='utf-8', newline='\n') as f:
-            f.write("[zrong's blog](http://zengrong.net) 中的所有文章\n")
+            f.write("[" + self.conf.get('site', 'name') +
+                    "](" + self.conf.get_url(only_site=True) +
+                    ") 中的所有文章\n")
             f.write('==========\n\n----------')
             self._write_list('page', f)
             self._write_list('post', f)
@@ -85,7 +88,7 @@ class WriteAction(Action):
                     print(afile, matchs)
                     for num in matchs:
                         content = content.replace('](/?p=%s'% num,
-                                '](http://zengrong.net/post/%s.htm'%num)
+                                '](%s/post/%s.htm'%(self.conf.get_url(only_site=True), num))
                 else:
                     content = None
             if content:

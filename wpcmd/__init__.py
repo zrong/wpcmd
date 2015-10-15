@@ -6,7 +6,7 @@
 # Modification 2015-05-28
 #########################################
 
-__all__ = ['write', 'wordpress', 'update']
+__all__ = ['write', 'new', 'show', 'update']
 
 import sys
 import os
@@ -26,7 +26,7 @@ add_log_handler(slog,
     handler=logging.StreamHandler(sys.stdout),
     debug=logging.DEBUG)
 
-class BlogError(Exception):
+class WPError(Exception):
     pass
 
 def check_args(argv=None):
