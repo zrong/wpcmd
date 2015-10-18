@@ -6,13 +6,14 @@
 # Modification 2015-05-28
 #########################################
 
-__all__ = ['util', 'new', 'show', 'update']
-
 import sys
 import os
 import logging
 import importlib
 import argparse
+
+__all__ = ['util', 'new', 'show', 'update']
+__version__ = '0.1.0'
 
 try:
     import rookout

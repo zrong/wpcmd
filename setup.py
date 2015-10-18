@@ -9,6 +9,24 @@
 
 import os
 from setuptools import setup
+import pip
+
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+def read(*parts):
+    content = None
+    with open(os.path.join(here, *parts), 'r', encoding='utf-8') as f:
+        content = f.read()
+    return content
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
 
 requires = []
 
@@ -16,7 +34,7 @@ dependency_links = []
 
 entry_points = {
     'console_scripts': [
-        'wpcmd = wpcmd:call',
+        'wpcmd = wpcmd:main',
     ]
 }
 
@@ -36,13 +54,16 @@ package_data = {
 #data_files = [(root, [os.path.join(root, f) for f in files])
 #    for root, dirs, files in os.walk('bin')]
 
+pip.main(['install', '-r', os.path.join(here, 'requirements.txt')])
+
 setup(
     name="wpcmd",
-    version="0.1.0",
-    url='http://zengrong.net/',
+    version=find_version('wpcmd', '__init__.py'),
+    url='http://zengrong.net/wpcmd',
     author='zrong',
     author_email='zrongzrong@gmail.com',
     description="A command-line tool for WordPress.",
+    long_description=read('README.md'),
     packages=['wpcmd'],
     classifiers=classifiers,
     entry_points=entry_points,
@@ -51,5 +72,5 @@ setup(
     #data_files=data_files,
     #install_requires=requires,
     #dependency_links = dependency_links,
-    #test_suite='hhlb.test',
+    #test_suite='wpcmd.test',
 )
