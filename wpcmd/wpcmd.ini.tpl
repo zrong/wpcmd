@@ -1,7 +1,6 @@
 [default]
 
 conffile = $CONFFILE
-cachefile = $CACHEFILE
 
 [site]
 
@@ -9,13 +8,14 @@ name        = my blog
 url         = http://my blog/xmlrpc.php
 user        = myname
 password    = password123456
+cachefile   = $CACHEFILE
 
-[file]
+# file
 
 ext         = .md
 draftfmt    = draft_%s
 
-[directory]
+# directory
 
 work        = $WORK
 draft       = draft

@@ -103,11 +103,11 @@ class Conf(object):
         One has published to wordpress and in draft status;
         One has not been published to wordpress yet.
         """
-        draftname = (self.get('file', 'draftfmt') % str(name))+self.get('file', 'ext')
-        return self.get_path(self.get('directory', 'draft'), draftname), draftname
+        draftname = (self.get(self.site, 'draftfmt') % str(name))+self.get(self.site, 'ext')
+        return self.get_path(self.get(self.site, 'draft'), draftname), draftname
 
     def get_new_draft(self, name=None):
-        draftdir = self.get_path(self.get('directory', 'draft'))
+        draftdir = self.get_path(self.get(self.site, 'draft'))
         if not os.path.exists(draftdir):
             os.makedirs(draftdir)
         draftnames = list(list_dir(draftdir))
@@ -126,26 +126,26 @@ class Conf(object):
         return draftfile, draftname
 
     def get_article(self, name, posttype):
-        postname = name+self.get('file', 'ext')
+        postname = name+self.get(self.site, 'ext')
         if self.is_article(posttype):
-            return self.get_path(self.get('directory', posttype), postname), postname
+            return self.get_path(self.get(self.site, posttype), postname), postname
         return None, None
 
     def get_path(self, name, *path):
-        workdir = os.path.join(self.get('directory', 'work'), name)
+        workdir = os.path.join(self.get(self.site, 'work'), name)
         if path:
             return os.path.abspath(os.path.join(workdir, *path))
         return workdir
 
     def get_media(self, *path):
-        mediadir = self.get_path(self.get('directory', 'media'))
+        mediadir = self.get_path(self.get(self.site, 'media'))
         if path:
             return os.path.join(mediadir, *path)
         return mediadir
 
     def get_mdfiles(self, posttype):
         for afile in os.listdir(self.get_path(posttype)):
-            if afile.endswith(self.get('file', 'ext')):
+            if afile.endswith(self.get(self.site, 'ext')):
                 name = afile.split('.')[0]
                 yield (posttype, name, os.path.join(posttype, afile))
 
