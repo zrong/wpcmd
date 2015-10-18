@@ -7,6 +7,7 @@
 
 from rookout import slog
 from wpcmd.base import Action
+from functools import wraps
 from wordpress_xmlrpc import (WordPressPost, WordPressPage)
 from wordpress_xmlrpc.methods.posts import (GetPosts, GetPost)
 from wordpress_xmlrpc.methods.options import GetOptions
@@ -15,53 +16,44 @@ from wordpress_xmlrpc.methods.media import (GetMediaLibrary, GetMediaItem)
 
 class ShowAction(Action):
 
+    def _print_results(fn):
+        def _real_print(self):
+            results = self.wpcall(fn(self))
+            if results:
+                self.print_results(results)
+            else:
+                slog.warning('No results.')
+        return _real_print
+
+    @_print_results
     def _show_page(self):
         field = {'post_type':'page'}
         field['number'] = self.args.number
         field['orderby'] = self.args.orderby
         field['order'] = self.args.order
 
-        method = None
         if self.args.query:
-            method = GetPost(self.get_postid(), result_class=WordPressPage)
-        else:
-            method =  GetPosts(field, result_class=WordPressPage)
-        results = self.wpcall(method)
-        if results:
-            self.print_results(results)
-        else:
-            slog.warning('No results for showing.')
+            return GetPost(self.get_postid(), result_class=WordPressPage)
+        return GetPosts(field, result_class=WordPressPage)
 
+    @_print_results
     def _show_post(self):
         field = {}
         field['number'] = self.args.number
         field['orderby'] = self.args.orderby
         field['order'] = self.args.order
 
-        method = None
         if self.args.query:
-            method = GetPost(self.get_postid())
-        else:
-            method = GetPosts(field)
-        results = self.wpcall(method)
-        if results:
-            self.print_results(results)
-        else:
-            slog.warning('No results for showing.')
+            return GetPost(self.get_postid())
+        return GetPosts(field)
 
+    @_print_results
     def _show_options(self):
-        results = self.wpcall(GetOptions([]))
-        if results:
-            self.print_results(results)
-        else:
-            slog.warning('No results for showing.')
+        return GetOptions([])
 
+    @_print_results
     def _show_tax(self):
-        results = self.wpcall(GetTaxonomies())
-        if results:
-            self.print_results(results)
-        else:
-            slog.warning('No results for showing.')
+        return GetTaxonomies()
 
     def _show_term(self):
         query = self.get_term_query()
@@ -72,6 +64,7 @@ class ShowAction(Action):
         else:
             slog.warning('No term %s!'%info)
 
+    @_print_results
     def _show_medialib(self):
         field = {}
         field['number'] = self.args.number
@@ -79,22 +72,15 @@ class ShowAction(Action):
         if extra:
             for k,v in extra.items():
                 field[k] = v
-        print(field)
-        results = self.wpcall(GetMediaLibrary(field))
-        if results:
-            self.print_results(results)
-        else:
-            slog.warning('No results for showing.')
+        slog.info("field:%s", field)
+        return GetMediaLibrary(field)
 
+    @_print_results
     def _show_mediaitem(self):
         if not self.args.query or len(self.args.query) == 0:
             slog.error('Please provide a attachment_id!')
             return
-        result = self.wpcall(GetMediaItem(self.args.query[0]))
-        if result:
-            self.print_result(result)
-        else:
-            slog.warning('No results for showing.')
+        return GetMediaItem(self.args.query[0])
 
     def go(self):
         print(self.args)
