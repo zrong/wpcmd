@@ -3,6 +3,7 @@
 #
 # Author zrong(zengrong.net)
 # Creation 2014-12-01
+# Modification  2015-10-18
 #########################################
 
 from rookout import slog
@@ -18,7 +19,10 @@ class ShowAction(Action):
 
     def _print_results(fn):
         def _real_print(self):
-            results = self.wpcall(fn(self))
+            method = fn(self)
+            if not method:
+                return
+            results = self.wpcall(method)
             if results:
                 self.print_results(results)
             else:
@@ -79,7 +83,7 @@ class ShowAction(Action):
     def _show_mediaitem(self):
         if not self.args.query or len(self.args.query) == 0:
             slog.error('Please provide a attachment_id!')
-            return
+            return None
         return GetMediaItem(self.args.query[0])
 
     def go(self):

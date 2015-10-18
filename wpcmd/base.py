@@ -3,7 +3,7 @@
 #
 # Author zrong(zengrong.net)
 # Creation 2014-12-04
-# Modification 2015-05-28
+# Modification 2015-10-18
 #########################################
 
 import os
@@ -64,14 +64,17 @@ class Conf(object):
     def get(self, section, option):
         return self.ini.get(section, option, raw=True, fallback=None)
 
+    def get_site(self, option):
+        return self.get(self.site, option)
+
     def get_user(self):
-        return self.ini.get(self.site, 'user')
+        return self.get_site('user')
 
     def get_password(self):
-        return self.ini.get(self.site, 'password')
+        return self.get_site('password')
 
     def get_url(self, only_site=False):
-        url = self.ini.get(self.site, 'url')
+        url = self.get_site('url')
         site = None
         if url.endswith('/xmlrpc.php'):
             site = url[:-11]
@@ -84,9 +87,6 @@ class Conf(object):
         if only_site:
             return site
         return url
-
-    def set_site(self, site):
-        self.site = site
 
     def save_to_file(self, inistr):
         write_file(self.conffile, inistr)
@@ -103,11 +103,11 @@ class Conf(object):
         One has published to wordpress and in draft status;
         One has not been published to wordpress yet.
         """
-        draftname = (self.get(self.site, 'draftfmt') % str(name))+self.get(self.site, 'ext')
-        return self.get_path(self.get(self.site, 'draft'), draftname), draftname
+        draftname = (self.get_site('draftfmt') % str(name))+self.get_site('ext')
+        return self.get_work_path('draft', draftname), draftname
 
     def get_new_draft(self, name=None):
-        draftdir = self.get_path(self.get(self.site, 'draft'))
+        draftdir = self.get_work_path('draft')
         if not os.path.exists(draftdir):
             os.makedirs(draftdir)
         draftnames = list(list_dir(draftdir))
@@ -126,26 +126,26 @@ class Conf(object):
         return draftfile, draftname
 
     def get_article(self, name, posttype):
-        postname = name+self.get(self.site, 'ext')
+        postname = name+self.get_site('ext')
         if self.is_article(posttype):
-            return self.get_path(self.get(self.site, posttype), postname), postname
+            return self.get_work_path(posttype, postname), postname
         return None, None
 
     def get_path(self, name, *path):
-        workdir = os.path.join(self.get(self.site, 'work'), name)
+        workdir = os.path.join(self.get_site('work'), name)
         if path:
             return os.path.abspath(os.path.join(workdir, *path))
         return workdir
 
-    def get_media(self, *path):
-        mediadir = self.get_path(self.get(self.site, 'media'))
+    def get_work_path(self, dirname, *path):
+        workpath = self.get_path(self.get_site(dirname))
         if path:
-            return os.path.join(mediadir, *path)
-        return mediadir
+            return os.path.join(workpath, *path)
+        return workpath
 
     def get_mdfiles(self, posttype):
-        for afile in os.listdir(self.get_path(posttype)):
-            if afile.endswith(self.get(self.site, 'ext')):
+        for afile in os.listdir(self.get_work_path(posttype)):
+            if afile.endswith(self.get_site('ext')):
                 name = afile.split('.')[0]
                 yield (posttype, name, os.path.join(posttype, afile))
 
@@ -154,7 +154,7 @@ class Action(object):
 
     def __init__(self, gconf, gtermcache, gargs, gparser):
         self.conf = gconf
-        self.conf.set_site(gargs.site)
+        self.conf.site = gargs.site
         self.cache = gtermcache
         self.args = gargs
         self.parser = gparser
@@ -354,3 +354,4 @@ class TermCache(PYConf):
                 terms.append(term)
         return terms
 
+# Modification 

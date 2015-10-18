@@ -6,7 +6,7 @@
 # Modification 2015-05-28
 #########################################
 
-__all__ = ['write', 'new', 'show', 'update']
+__all__ = ['util', 'new', 'show', 'update']
 
 import sys
 import os
@@ -33,27 +33,28 @@ def check_args(argv=None):
     parser = argparse.ArgumentParser(prog='wpcmd')
     subParsers = parser.add_subparsers(dest='sub_name', help='sub-commands')
 
-    pw = subParsers.add_parser('write', 
-        help='Write *.md files.')
-    pw.add_argument('-r', '--readme', action='store_true', 
+    put = subParsers.add_parser('util', 
+        help='Some utils.')
+    put.add_argument('-r', '--readme', action='store_true', 
         help='Build README.md.')
-    pw.add_argument('-u', '--url', action='store_true', 
+    put.add_argument('-u', '--url', action='store_true', 
         help='Rewrite url.')
-    pw.add_argument('-c', '--category', action='store_true', 
+    put.add_argument('-c', '--category', action='store_true', 
         help='Rewrite category.')
-    pw.add_argument('-d', '--dirname', type=str, default='post',
+    put.add_argument('-d', '--dirname', type=str, default='post',
         choices = ['post', 'page', 'draft', 'all'],
         help='Rewrite articles by type. The value is [post|page|draft|all].')
-    pw.add_argument('-a', '--analytic', action='store_true',
+    put.add_argument('-a', '--analytic', action='store_true',
         help='Analytic the articles.')
-    pw.add_argument('--name', type=str,
-        help='Provide a article name.')
+    put.add_argument('-k', '--check', action='store_true',
+        help='Check articles.')
+    put.add_argument('-q', '--query', nargs='*',
+        help='The options for query.')
 
     pn = subParsers.add_parser('new', 
         help='Create some new content.')
     pn.add_argument('-t', '--type', type=str,
         choices=['post', 'page', 'tag', 'category'],
-        default='post',
         help='Create a new content in wordpress.')
     pn.add_argument('-q', '--query', nargs='*',
         help='The options for query.')
@@ -93,7 +94,7 @@ def check_args(argv=None):
         help='Write output text to a file.')
 
     # Add site argument to new/update/show.
-    for subp in (pn, ps, pu, pw):
+    for subp in (pn, ps, pu, put):
         subp.add_argument('-s', '--site', type=str, default='site',
             help='Set the site section in ini config files. Default value is "site".')
 

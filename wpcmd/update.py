@@ -28,7 +28,7 @@ class UpdateAction(Action):
         super(UpdateAction, self).__init__(gconf, gtermcache, gargs, gparser)
         self.media_url_re = re.compile(r'wp-content/.*/(\d{4}/\d{2}/).*')
         self.media_draft_re = re.compile(r'%s/draft/[\w\.\-]*'%
-                self.conf.get('directory', 'media'), re.M)
+                self.conf.get_site('media'), re.M)
 
     def _get_article_metadata(self, meta):
         adict = PYConf()
@@ -68,7 +68,7 @@ class UpdateAction(Action):
             return os.path.splitext(os.path.split(afile)[1])[0]
 
         namepre = _get_mainname(afile)
-        media = self.conf.get('directory', 'media')
+        media = self.conf.get_site('media')
         outputdir = self.conf.get_path(media, 'draft')
         baseurl = '%s/draft/'%media
         if output:
@@ -151,7 +151,7 @@ class UpdateAction(Action):
 
     def _write_html_file(self, afile):
         out = self.args.output if os.path.isabs(self.args.output) else \
-                self.conf.get_path(self.conf.get('directory', 'output'), self.args.output)
+                self.conf.get_work_path('output', self.args.output)
         html, meta, txt, medias = self._get_article_content(afile, output=out)
 
         if html:
@@ -292,7 +292,7 @@ class UpdateAction(Action):
             url = upd['url']
             urls.append(url)
             match = self.media_url_re.search(url)
-            targetdir = self.conf.get_media(match.group(1))
+            targetdir = self.conf.get_work_path('media', match.group(1))
             if not os.path.exists(targetdir):
                 os.makedirs(targetdir)
             attach_ids.append(upd['id'])
