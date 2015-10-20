@@ -121,5 +121,6 @@ def main():
 
     gargs, subParser = check_args()
     if gargs:
-        pack = importlib.import_module(gargs.sub_name)
-        pack.build(gconf, gcache, gargs, subParser)
+        modname = __package__ + '.' + gargs.sub_name
+        mod = importlib.import_module(modname)
+        mod.build(gconf, gcache, gargs, subParser)

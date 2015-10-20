@@ -353,5 +353,3 @@ class TermCache(PYConf):
                     return None
                 terms.append(term)
         return terms
-
-# Modification 
