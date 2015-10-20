@@ -1,3 +1,4 @@
+include requirements.txt
 include wpcmd/wpcmd.ini.tpl
 include README.md
 include LICENSE

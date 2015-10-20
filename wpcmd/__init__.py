@@ -13,7 +13,7 @@ import importlib
 import argparse
 
 __all__ = ['util', 'new', 'show', 'update']
-__version__ = '0.1.0'
+__version__ = '0.1.4'
 
 try:
     import rookout
@@ -106,10 +106,8 @@ def check_args(argv=None):
     return None, None
 
 def main():
-    workdir = os.path.abspath(
-        os.path.join(os.path.split(
-        os.path.abspath(__file__))[0], os.pardir))
     homedir = os.path.expanduser('~')
+    workdir = os.path.join(homedir, 'blog')
     conffile = os.path.join(homedir, Conf.INI_FILE)
     cachefile = os.path.join(homedir, Conf.CACHE_FILE)
 

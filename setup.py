@@ -39,12 +39,14 @@ entry_points = {
 }
 
 classifiers = [
-    'Development Status :: 5 - Production/Stable',
-    'Environment :: Console',
-    'Operating System :: OS Independent',
     'Programming Language :: Python :: 3.4',
-    'Topic :: Internet :: WWW/HTTP',
-    'Topic :: Software Development :: Libraries :: Python Modules',
+    'Development Status :: 4 - Beta',
+    'Environment :: Console',
+    'Environment :: Web Environment',
+    'Operating System :: OS Independent',
+    'Topic :: Internet :: WWW/HTTP :: Site Management',
+    'Topic :: Utilities',
+    'License :: OSI Approved :: BSD License',
 ]
 
 package_data = {
@@ -64,11 +66,14 @@ setup(
     long_description=read('README.md'),
     packages=find_packages(exclude=['test']),
     install_requires=find_requires('requirements.txt'),
+    keywords = "utils development zrong wpcmd rookout wordpress xmlrpc",
     classifiers=classifiers,
-    entry_points=entry_points
+    include_package_data = True,
+    #data_files=['wpcmd/wpcmd.ini.tpl'],
+    entry_points=entry_points,
+    license = "BSD",
     #include_package_data=True,
     #package_data=package_data,
-    #data_files=data_files,
     #dependency_links = [],
     #test_suite='wpcmd.test',
 )
