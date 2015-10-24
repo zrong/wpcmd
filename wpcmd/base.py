@@ -139,6 +139,8 @@ class Conf(object):
 
     def get_work_path(self, dirname, *path):
         workpath = self.get_path(self.get_site(dirname))
+        if not os.path.exists(workpath):
+            os.makedirs(workpath)
         if path:
             return os.path.join(workpath, *path)
         return workpath
