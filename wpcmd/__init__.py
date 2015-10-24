@@ -32,6 +32,8 @@ class WPError(Exception):
 
 def check_args(argv=None):
     parser = argparse.ArgumentParser(prog='wpcmd')
+    parser.add_argument('-v', '--version', action='store_true',
+            help='Show version of wpcmd.')
     subParsers = parser.add_subparsers(dest='sub_name', help='sub-commands')
 
     put = subParsers.add_parser('util', 
@@ -102,6 +104,9 @@ def check_args(argv=None):
     args = parser.parse_args(args=argv)
     if args.sub_name:
         return args, subParsers.choices[args.sub_name]
+    if args.version:
+        slog.info(__version__)
+        return None, None
     parser.print_help()
     return None, None
 

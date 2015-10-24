@@ -70,7 +70,9 @@ class UtilAction(Action):
             f.write("[" + self.conf.get_site('name') +
                     "](" + self.conf.get_url(only_site=True) +
                     ") 中的所有文章\n")
-            f.write('==========\n\n----------')
+            f.write('==========\n本博客采用 '
+                    '[WPCMD](http://zengrong.net/wpcmd) '
+                    '维护\n----------')
             self._write_list('page', f)
             self._write_list('post', f)
 
