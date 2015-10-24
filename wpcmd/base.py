@@ -45,10 +45,10 @@ class Conf(object):
             return True
 
         tplstr = read_file(resource_filename('wpcmd', Conf.TPL_FILE))
-        inistr = Template(tplstr).substitute(
-            {'CONFFILE':self.conffile, 
-            'CACHEFILE':self.cachefile,
-            'WORK':workdir,
+        inistr = Template(tplstr).substitute({
+                'CONFFILE':self.conffile, 
+                'CACHEFILE':self.cachefile,
+                'WORK':workdir,
             })
         self.save_to_file(inistr)
         self.read_from_file()
@@ -108,8 +108,6 @@ class Conf(object):
 
     def get_new_draft(self, name=None):
         draftdir = self.get_work_path('draft')
-        if not os.path.exists(draftdir):
-            os.makedirs(draftdir)
         draftnames = list(list_dir(draftdir))
         draftfile, draftname = None, None
         if name:
