@@ -61,9 +61,9 @@ class NewAction(Action):
             slog.error('Provide 1 arguments at least please.')
             return
         query = self.get_term_query()
-        print('query:', query)
+        slog.info('query: %s', query)
         term = self.get_terms_from_wp(query, force=True)
-        print(term)
+        slog.info('term: %s', term)
         if term:
             slog.error('The term "%s" has been in wordpress.'%self.args.query[0])
             return
@@ -88,7 +88,7 @@ class NewAction(Action):
         slog.info('The term %s has saved.'%name)
 
     def go(self):
-        print(self.args)
+        # print(self.args)
         if self.args.type in ('post','page'):
             self._new_draft()
         elif self.args.type in ('category', 'tag'):

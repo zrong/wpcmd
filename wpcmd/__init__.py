@@ -49,8 +49,10 @@ def check_args(argv=None):
         help='Rewrite articles by type. The value is [post|page|draft|all].')
     put.add_argument('-a', '--analytic', action='store_true',
         help='Analytic the articles.')
-    put.add_argument('-k', '--check', action='store_true',
+    put.add_argument('--check-posts', action='store_true',
         help='Check articles.')
+    put.add_argument('--check-mds', action='store_true',
+        help='Check markdown files.')
     put.add_argument('-q', '--query', nargs='*',
         help='The options for query.')
 

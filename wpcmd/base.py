@@ -144,10 +144,12 @@ class Conf(object):
         return workpath
 
     def get_mdfiles(self, posttype):
-        for afile in os.listdir(self.get_work_path(posttype)):
+        workpath = self.get_work_path(posttype)
+        for afile in os.listdir(workpath):
             if afile.endswith(self.get_site('ext')):
                 name = afile.split('.')[0]
-                yield (posttype, name, os.path.join(posttype, afile))
+                filepath = os.path.join(workpath, afile)
+                yield (posttype, name, filepath)
 
 
 class Action(object):

@@ -87,7 +87,7 @@ class ShowAction(Action):
         return GetMediaItem(self.args.query[0])
 
     def go(self):
-        print(self.args)
+        # print(self.args)
         if self.args.type == 'post':
             self._show_post()
         elif self.args.type == 'page':

@@ -23,10 +23,9 @@ class UtilAction(Action):
     def _write_list(self, adir, rf):
         rf.write('\n\n# '+adir+'\n\n')
         is_post = adir == 'post'
-        dir_path = self.conf.get_path(adir)
         names = []
         for adir, name, fpath in self.conf.get_mdfiles(adir):
-            title, time = self._get_title_and_date(os.path.join(dir_path, name+'.md'))
+            title, time = self._get_title_and_date(fpath)
             if not title or not time:
                 continue
             names.append({'name':name,'title':title,'time':time})
@@ -84,7 +83,6 @@ class UtilAction(Action):
         url = re.compile(r'\]\(/\?p=(\d+)\)', re.S)
         for adir, name, fpath in self.conf.get_mdfiles(dirname):
             content = None
-            fpath = os.path.join(adir, afile)
             with open(fpath, 'r', encoding='utf-8', newline='\n') as f:
                 content = f.read()
                 matchs = url.findall(content)
@@ -123,7 +121,7 @@ class UtilAction(Action):
                 filelist.append(f)
             slog.info(filelist)
 
-    def _check(self, offset, number):
+    def _check_post(self, offset, number):
         field = {'post_type':'post'}
         field['offset'] = offset
         field['number'] = number
@@ -135,7 +133,7 @@ class UtilAction(Action):
     def _check_posts(self):
         offset = 0
         number = 20
-        results = self._check(offset, number)
+        results = self._check_post(offset, number)
         logfile = self.conf.get_work_path('output', 'check.txt')
         with open(logfile, 'w', encoding='utf-8', newline='\n') as f:
             while(results):
@@ -144,10 +142,18 @@ class UtilAction(Action):
                     if '\\"http' in result.content or '<pre lang="' in result.content:
                         f.write(result.id + '|,|' + result.title+'\n')
                 offset += number
-                results = self._check(offset, number)
+                results = self._check_post(offset, number)
+
+    def _check_mds(self):
+        logfile = self.conf.get_work_path('output', 'check.txt')
+        with open(logfile, 'w', encoding='utf-8', newline='\n') as f:
+            for adir, name, fpath in self.conf.get_mdfiles('post'):
+                txt = read_file(fpath)
+                if re.search(r'\/wp-content\/uploads\/\d{4}\/\d{2}\/\w+\.pdf', txt, re.M):
+                    f.write(name+"\n")
 
     def build(self):
-        print(self.args)
+        # print(self.args)
         noAnyArgs = True
         if self.args.readme:
             self._write_readme()
@@ -158,8 +164,11 @@ class UtilAction(Action):
         if self.args.analytic:
             self._write_analytic()
             noAnyArgs = False
-        if self.args.check:
+        if self.args.check_posts:
             self._check_posts()
+            noAnyArgs = False
+        if self.args.check_mds:
+            self._check_mds()
             noAnyArgs = False
 
         if noAnyArgs and self.parser:
