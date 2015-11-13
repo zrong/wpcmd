@@ -22,7 +22,7 @@ def convert(txt, gv_odir, gv_bdir='media/draft', gv_namepre=""):
                 'wpcmd.mde.fenced_code_extra',
                 ],
             extension_configs={
-                'fenced_code_extra':{
+                'wpcmd.mde.fenced_code_extra':{
                     'graphviz':{
                         'OUTPUT_DIR':gv_odir,
                         'BASE_URL':gv_bdir,
