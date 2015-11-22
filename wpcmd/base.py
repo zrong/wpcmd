@@ -309,6 +309,9 @@ class TermCache(PYConf):
     def save_term(self, term, taxname, termdict=None):
         if termdict == None:
             termdict = self[taxname]
+        if termdict == None:
+            termdict = PYConf()
+            self[taxname] = termdict
         termdict[term.slug] = PYConf({
             'id':term.id,
             'group':term.group,

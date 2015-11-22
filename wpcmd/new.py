@@ -61,9 +61,9 @@ class NewAction(Action):
             slog.error('Provide 1 arguments at least please.')
             return
         query = self.get_term_query()
-        slog.info('query: %s', query)
+        # slog.info('self.args.query: %s', self.args.query)
         term = self.get_terms_from_wp(query, force=True)
-        slog.info('term: %s', term)
+        slog.info('Get term from WordPress, query: %s, result: %s', query, term)
         if term:
             slog.error('The term "%s" has been in wordpress.'%self.args.query[0])
             return
