@@ -3,7 +3,7 @@
 #
 # Author zrong(zengrong.net)
 # Creation 2014-12-04
-# Modification 2015-10-18
+# Modification 2015-11-22
 #########################################
 
 import os
@@ -33,11 +33,10 @@ class Conf(object):
 
     ARTICLE_TYPES = ('post', 'page', 'draft')
 
-    def __init__(self, conffile, cachefile, gcache):
+    def __init__(self, conffile):
         self.conffile = conffile
-        self.cachefile = cachefile
         self.ini = configparser.ConfigParser()
-        self.cache = gcache
+        self.cache = None
 
     def init(self, workdir):
         if os.path.exists(self.conffile):
@@ -46,14 +45,18 @@ class Conf(object):
 
         tplstr = read_file(resource_filename('wpcmd', Conf.TPL_FILE))
         inistr = Template(tplstr).substitute({
-                'CONFFILE':self.conffile, 
-                'CACHEFILE':self.cachefile,
+                'CACHEFILE':Conf.CACHE_FILE,
                 'WORK':workdir,
             })
         self.save_to_file(inistr)
         self.read_from_file()
         slog.info('Please modify %s !'%self.conffile)
         return False
+
+    def init_cache(self, site_name):
+        self.__site_section = site_name
+        self.cache = TermCache(self.get_site('cachefile'))
+        self.cache.init()
 
     def __missing__(self, key):
         return None
@@ -65,7 +68,7 @@ class Conf(object):
         return self.ini.get(section, option, raw=True, fallback=None)
 
     def get_site(self, option):
-        return self.get(self.site, option)
+        return self.get(self.__site_section, option)
 
     def get_user(self):
         return self.get_site('user')

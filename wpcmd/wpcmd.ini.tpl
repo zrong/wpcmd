@@ -1,7 +1,3 @@
-[default]
-
-conffile = $CONFFILE
-
 [site]
 
 name        = my blog

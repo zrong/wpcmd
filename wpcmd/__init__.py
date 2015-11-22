@@ -3,7 +3,7 @@
 #
 # Author zrong(zengrong.net)
 # Creation 2014-11-18
-# Modification 2015-05-28
+# Modification 2015-11-22
 #########################################
 
 import sys
@@ -116,16 +116,14 @@ def main():
     homedir = os.path.expanduser('~')
     workdir = os.path.join(homedir, 'blog')
     conffile = os.path.join(homedir, Conf.INI_FILE)
-    cachefile = os.path.join(homedir, Conf.CACHE_FILE)
 
-    gcache = TermCache(cachefile)
-    gcache.init()
-    gconf = Conf(conffile, cachefile, gcache)
+    gconf = Conf(conffile)
     if not gconf.init(workdir):
         exit(1)
 
     gargs, subParser = check_args()
     if gargs:
+        gconf.init_cache(gargs.site)
         modname = __package__ + '.' + gargs.sub_name
         mod = importlib.import_module(modname)
-        mod.build(gconf, gcache, gargs, subParser)
+        mod.build(gconf, gconf.cache, gargs, subParser)
