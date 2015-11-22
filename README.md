@@ -1,4 +1,4 @@
-[中文说明](./README_cn.md)
+[中文说明](http://zengrong.net/wpcmd)
 
 # wpcmd
 
