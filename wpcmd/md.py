@@ -9,14 +9,17 @@
 import re
 import markdown
 from markdown.extensions.codehilite import CodeHiliteExtension
+from markdown.extensions.toc import TocExtension
 
 # gvdir = graphviz directory
 def convert(txt, gv_odir, gv_bdir='media/draft', gv_namepre=""):
     codehilite = CodeHiliteExtension(linenums=False, guess_lang=False)
+    toc = TocExtension(anchorlink=False,permalink=True)
 
     md = markdown.Markdown(
             extensions=[
                 'wpcmd.mde.metadata',
+                toc,
                 'markdown.extensions.tables',
                 codehilite,
                 'wpcmd.mde.fenced_code_extra',
