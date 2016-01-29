@@ -1,11 +1,11 @@
 #########################################
 # mdx_metadata.py
 #
-# metadata handing for markdown using sorteddict.
+# metadata handing for markdown using OrderedDict.
 #
 # Modifier zrong(zengrong.net)
 # Creation 2015-06-07
-# Modification 2015-06-10
+# Modification 2016-01-29 no empty list
 #########################################
 
 """
@@ -76,7 +76,7 @@ class MetadataPreprocessor(Preprocessor):
                 try:
                     meta[key].append(value)
                 except KeyError:
-                    meta[key] = [value]
+                    meta[key] = [value] if value else None
             else:
                 m2 = META_MORE_RE.match(line)
                 if m2 and key:
