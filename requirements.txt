@@ -1,4 +1,4 @@
 python-wordpress-xmlrpc>=2.3
 Pygments>=2.0.2
 Markdown>=2.5.2
-rookout>=0.4.5
+rookout>=0.5.0

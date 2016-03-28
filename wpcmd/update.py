@@ -133,7 +133,7 @@ class UpdateAction(Action):
                 i = i+1
 
             # Rewrite the text with modified metadata.
-            write_file(afile, txt)
+            write_file(afile, txt, newline='\n')
             medias = self._get_medias(txt)
             if medias:
                 slog.error('Medias in the article are maybe wrong!')
@@ -155,7 +155,7 @@ class UpdateAction(Action):
         html, meta, txt, medias = self._get_article_content(afile, output=out)
 
         if html:
-            write_file(out, html)
+            write_file(out, html, newline='\n')
 
     def _update_a_draft(self):
         postid = self.get_postid()

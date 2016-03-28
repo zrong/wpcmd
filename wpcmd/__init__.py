@@ -13,7 +13,7 @@ import importlib
 import argparse
 
 __all__ = ['util', 'new', 'show', 'update']
-__version__ = '0.1.9'
+__version__ = '0.2.0'
 
 try:
     import rookout
