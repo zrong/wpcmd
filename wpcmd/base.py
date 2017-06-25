@@ -285,33 +285,34 @@ class Action(object):
             self.parser.print_help()
 
 
-class TermCache(PYConf):
+class TermCache(object):
     """ A cache for terms.
     """
 
     def __init__(self, filepath):
         self.cachefile = filepath
+        self.conf = PYConf()
 
     def init(self):
         if os.path.exists(self.cachefile):
-            super().read_from_file(self.cachefile)
+            self.conf.read_from_file(self.cachefile)
 
     def save_to_file(self):
-        super().save_to_file(self.cachefile)
+        self.conf.save_to_file(self.cachefile)
 
     def save_terms(self, terms, taxname):
         termdict = PYConf()
         for term in terms:
             self.save_term(term, taxname, termdict)
-        self[taxname] = termdict
+        self.conf[taxname] = termdict
         self.save_to_file()
 
     def save_term(self, term, taxname, termdict=None):
         if termdict == None:
-            termdict = self[taxname]
+            termdict = self.conf[taxname]
         if termdict == None:
             termdict = PYConf()
-            self[taxname] = termdict
+            self.conf[taxname] = termdict
         termdict[term.slug] = PYConf({
             'id':term.id,
             'group':term.group,
@@ -325,11 +326,11 @@ class TermCache(PYConf):
                 })
 
     def get_term(self, taxname, slug):
-        if not self[taxname]:
+        if not self.conf[taxname]:
             return None
-        if not self[taxname][slug]:
+        if not self.conf[taxname][slug]:
             return None
-        termdict = self[taxname][slug]
+        termdict = self.conf[taxname][slug]
         term = WordPressTerm()
         term.id = termdict['id']
         term.group = termdict['group']
